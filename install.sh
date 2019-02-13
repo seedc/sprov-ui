@@ -55,8 +55,6 @@ elif [[ x"${release}" == x"debian" ]]; then
     fi
 fi
 
-echo "$release $os_version"
-
 install_java() {
     if [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk curl -y
@@ -74,11 +72,13 @@ close_firewall() {
     systemctl disable firewalld
 }
 install_sprov-ui() {
-    mkdir /usr/local/sprov-ui
+    if [[ ! -f /usr/local/sprov-ui ]]; then
+        mkdir /usr/local/sprov-ui
+    fi
     wget -O /usr/local/sprov-ui/sprov-ui.war https://github.com/sprov065/sprov-ui/releases/download/v1.0.0-beta/sprov-ui-1.0.0.war
-    read -p "请输入面板监听端口[默认${green}80${plain}]：" port
-    read -p "请输入面板登录用户名[默认${green}sprov${plain}]：" user
-    read -p "请输入面板登录密码[默认${green}blog.sprov.xyz${plain}]：" pwd
+    read -p "请输入面板监听端口[默认80]：" port
+    read -p "请输入面板登录用户名[默认sprov]：" user
+    read -p "请输入面板登录密码[默认blog.sprov.xyz]：" pwd
     if [[ -z "${port}" ]]; then
         port=80
     fi
@@ -99,6 +99,14 @@ install_sprov-ui() {
     echo "" >> /etc/systemd/system/sprov-ui.service
     echo "[Install]" >> /etc/systemd/system/sprov-ui.service
     echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
+    systemctl daemon-reload
+    echo -e "${green}v2ray面板安装成功${plain}\n"
+    echo -e "面板监听端口（不是v2ray端口）：${green}${port}${plain}"
+    echo -e "面板登录用户名：${green}${user}${plain}"
+    echo -e "面板登录密码：${green}${pwd}${plain}"
+    echo -e "开启面板：systemctl start sprov-ui"
+    echo -e "关闭面板：systemctl stop sprov-ui"
+    echo -e "重启面板：systemctl restart sprov-ui"
 }
 
 echo "开始安装"
@@ -106,4 +114,3 @@ install_java
 install_v2ray
 close_firewall
 install_sprov-ui
-echo -e "${green}v2ray面板安装成功${plain}\n"
