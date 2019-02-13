@@ -59,9 +59,9 @@ echo "$release $os_version"
 
 install_java() {
     if [[ x"${release}" == x"centos" ]]; then
-        yum install java-1.8.0-openjdk git curl -y
+        yum install java-1.8.0-openjdk curl -y
     elif [[ x"${release}" == x"ubuntu" || x"${release}" == x"debian" ]]; then
-        apt-get install java-1.8.0-openjdk git curl -y
+        apt-get install java-1.8.0-openjdk curl -y
     fi
 }
 
@@ -69,12 +69,41 @@ install_v2ray() {
     bash <(curl -L -s https://install.direct/go.sh) -f
 }
 
+close_firewall() {
+    systemctl stop firewalld
+    systemctl disable firewalld
+}
 install_sprov-ui() {
-    return 1
+    mkdir /usr/local/sprov-ui
+    wget -O /usr/local/sprov-ui/sprov-ui.war https://github.com/sprov065/sprov-ui/releases/download/v1.0.0-beta/sprov-ui-1.0.0.war
+    read -p "请输入面板监听端口[默认${green}80${plain}]：" port
+    read -p "请输入面板登录用户名[默认${green}sprov${plain}]：" user
+    read -p "请输入面板登录密码[默认${green}blog.sprov.xyz${plain}]：" pwd
+    if [[ -z "${port}" ]]; then
+        port=80
+    fi
+    if [[ -z "${user}" ]]; then
+        user="sprov"
+    fi
+    if [[ -z "${pwd}" ]]; then
+        pwd="blog.sprov.xyz"
+    fi
+    echo "[Unit]" > /etc/systemd/system/sprov-ui.service
+    echo "Description=sprov-ui Service" >> /etc/systemd/system/sprov-ui.service
+    echo "After=network.target" >> /etc/systemd/system/sprov-ui.service
+    echo "Wants=network.target" >> /etc/systemd/system/sprov-ui.service
+    echo "" >> /etc/systemd/system/sprov-ui.service
+    echo "[Service]" >> /etc/systemd/system/sprov-ui.service
+    echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
+    echo "ExecStart=/usr/bin/java -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
+    echo "" >> /etc/systemd/system/sprov-ui.service
+    echo "[Install]" >> /etc/systemd/system/sprov-ui.service
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
 }
 
 echo "开始安装"
 install_java
 install_v2ray
+close_firewall
 install_sprov-ui
 echo -e "${green}v2ray面板安装成功${plain}\n"
