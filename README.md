@@ -10,3 +10,8 @@
  - Ubuntu 18
  - Debian 8
  - Debian 9
+
+# 一键安装
+'''
+wget -O install.sh -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/install.sh && bash install.sh
+'''
