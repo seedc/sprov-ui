@@ -58,8 +58,10 @@ fi
 install_java() {
     if [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk curl -y
-    elif [[ x"${release}" == x"ubuntu" || x"${release}" == x"debian" ]]; then
+    elif [[ x"${release}" == x"debian" ]]; then
         apt-get install java-1.8.0-openjdk curl -y
+    elif [[ x"${release}" == x"ubuntu" ]]; then
+        apt-get install openjdk-8-jre-headless curl -y
     fi
 }
 
@@ -68,9 +70,14 @@ install_v2ray() {
 }
 
 close_firewall() {
-    systemctl stop firewalld
-    systemctl disable firewalld
+    if [[ x"${release}" == x"centos" || x"${release}" == x"debian" ]]; then
+        systemctl stop firewalld
+        systemctl disable firewalld
+    elif [[ x"${release}" == x"ubuntu" ]]; then
+        ufw disable
+    fi
 }
+
 install_sprov-ui() {
     if [[ ! -f /usr/local/sprov-ui ]]; then
         mkdir /usr/local/sprov-ui
@@ -95,7 +102,12 @@ install_sprov-ui() {
     echo "" >> /etc/systemd/system/sprov-ui.service
     echo "[Service]" >> /etc/systemd/system/sprov-ui.service
     echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
-    echo "ExecStart=/usr/bin/java -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
+    if [[ x"${release}" == x"debian" ]]; then
+        java_cmd="/usr/share/java"
+    else
+        java_cmd="/usr/bin/java"
+    fi
+    echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
     echo "" >> /etc/systemd/system/sprov-ui.service
     echo "[Install]" >> /etc/systemd/system/sprov-ui.service
     echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
