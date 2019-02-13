@@ -1,0 +1,20 @@
+[v-cloak] {
+    display: none;
+}
+
+body {
+    margin: 0;
+    background-color: #f6f6f6;
+}
+
+.el-card {
+    border-radius: 20px !important;
+}
+
+.el-tag,.el-alert,.el-button {
+    border-radius: 20px !important;
+}
+
+.el-progress-bar__inner {
+    transition: 0.5s;
+}

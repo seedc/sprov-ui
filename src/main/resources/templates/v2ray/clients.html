@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="common/common_head :: commonHead('客户端下载')"></head>
+<body>
+
+<el-container id="app" v-cloak>
+    <el-header th:replace="v2ray/header :: header"></el-header>
+    <el-main>
+        <el-card>
+            <p>
+                <el-tag>v2rayW（Windows）</el-tag>：
+                <a href="https://github.com/Cenmrev/V2RayW/releases" target="_blank">Github</a>
+            </p>
+            <p>
+                <el-tag>V2RayN（Windows）</el-tag>：
+                <a href="https://github.com/2dust/v2rayN/releases" target="_blank">Github</a></p>
+            <p>
+                <el-tag>v2rayX（maxOS）</el-tag>：
+                <a href="https://github.com/Cenmrev/V2RayX/releases" target="_blank">Github</a>
+            </p>
+            <p>
+                <el-tag>V2RayU（maxOS）</el-tag>：
+                <a href="https://github.com/yanue/V2rayU/releases" target="_blank">Github</a>
+            </p>
+            <p>
+                <el-tag>Shadowrocket（iOS）</el-tag>：
+                <a href="https://itunes.apple.com/us/app/shadowrocket/id932747118?mt=8" target="_blank">itunes</a>
+            </p>
+            <p>
+                <el-tag>i2Ray（iOS）</el-tag>：
+                <a href="https://itunes.apple.com/us/app/i2ray/id1445270056?mt=8" target="_blank">itunes</a>
+            </p>
+            <p>
+                <el-tag>Quantumult（iOS）</el-tag>：
+                <a href="https://itunes.apple.com/us/app/quantumult/id1252015438?mt=8" target="_blank">itunes</a>
+            </p>
+            <p>
+                <el-tag>BifrostV（Android）</el-tag>：
+                <a href="https://play.google.com/store/apps/details?id=com.github.dawndiy.bifrostv" target="_blank">Play商店</a> |
+                <a href="https://apkpure.com/bifrostv/com.github.dawndiy.bifrostv" target="_blank">ApkPure</a>
+            </p>
+            <p>
+                <el-tag>V2RayNG（Android）</el-tag>：
+                <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang" target="_blank">Play商店</a> |
+                <a href="https://github.com/2dust/v2rayNG/releases" target="_blank">Github</a>
+            </p>
+        </el-card>
+    </el-main>
+    <el-footer th:replace="v2ray/footer :: footer"></el-footer>
+</el-container>
+
+<div th:replace="common/common_js :: commonJs"></div>
+<script>
+
+    let app = new Vue({
+        el: '#app',
+        data: {
+            defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
+        },
+        methods: {
+            menuSelect: function (index) { console.log(index); location.href = index; }
+        }
+    });
+
+</script>
+
+</body>
+</html>

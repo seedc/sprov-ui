@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<el-header th:fragment="header"
+           style="background-color: #409EFF;">
+    <!--<span>SPROV-UI</span>-->
+    <el-menu class="hidden-xs-only"
+             :default-active="defaultActive"
+             mode="horizontal"
+             background-color="#409EFF"
+             text-color="#fff"
+             active-text-color="#FFE904"
+             @select="menuSelect">
+        <el-menu-item index="/v2ray/">运行状态</el-menu-item>
+        <el-menu-item index="/v2ray/accounts/">账号列表</el-menu-item>
+        <el-menu-item index="/v2ray/clients/">客户端</el-menu-item>
+    </el-menu>
+    <el-dropdown class="hidden-sm-and-up"
+                 @command="menuSelect"
+                 style="margin-top: 20px; color: white;">
+        <span class="el-dropdown-link">
+            菜单 <i class="el-icon-arrow-down"></i>
+        </span>
+        <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="/v2ray/">运行状态</el-dropdown-item>
+            <el-dropdown-item command="/v2ray/accounts/">账号列表</el-dropdown-item>
+            <el-dropdown-item command="/v2ray/clients/">客户端</el-dropdown-item>
+        </el-dropdown-menu>
+    </el-dropdown>
+</el-header>
+
+</body>
+</html>

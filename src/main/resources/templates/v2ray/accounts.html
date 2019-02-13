@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="common/common_head :: commonHead('v2ray账号')"></head>
+<body>
+<style>
+    @media only screen and (max-width: 768px) {
+        .el-col + .el-col {
+            margin-top: 10px;
+        }
+    }
+    .el-row + .el-row {
+        margin-top: 10px;
+    }
+
+    .el-card + .el-card {
+        margin-top: 10px;
+    }
+</style>
+
+<el-container id="app" v-cloak>
+    <el-header th:replace="v2ray/header :: header"></el-header>
+    <el-main>
+        <el-row style="margin-bottom: 10px">
+            <el-col>
+                <el-alert title="修改完配置记得重启v2ray" type="warning" :closable="false"></el-alert>
+            </el-col>
+        </el-row>
+        <el-row style="margin-bottom: 10px">
+            <el-col>
+                <el-alert title="使用方法：点【添加】来增加一个账号，添加或修改账号之后点【重启】来使配置生效，不想用了可以点【关闭】，若关闭后想再次开启，点【重启】即可" type="warning" :closable="false"></el-alert>
+            </el-col>
+        </el-row>
+        <!--<el-row style="margin-bottom: 10px">-->
+            <!--<el-col>-->
+                <!--<el-alert title="点击每个标签都可以复制里面的内容" type="error" :closable="false"></el-alert>-->
+            <!--</el-col>-->
+        <!--</el-row>-->
+        <el-card>
+            <div slot="header">
+                <el-button type="success" size="mini" @click="openAdd">添加</el-button>
+                <el-button type="primary" size="mini" @click="restart">重启</el-button>
+                <el-button type="danger" size="mini" @click="stop">关闭</el-button>
+            </div>
+            <div v-for="inbound in inbounds" style="margin-top: 10px;">
+                <!-- vmess协议 -->
+                <el-card v-if="inbound.protocol === 'vmess'"
+                         v-for="(client, index) in inbound.settings.clients">
+                    <div slot="header">
+                        <el-tag type="success">{{ inbound.protocol }}</el-tag>
+                        <el-button type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
+                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                    </div>
+                    <el-row>
+                        <el-col :sm="12">
+                            IP：<el-tag>{{ ip }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            端口：<el-tag>{{ inbound.port }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col :sm="12">
+                            用户ID：<el-tag>{{ client.id }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            额外id（alterId）：<el-tag>{{ client.alterId }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col :sm="12">
+                            加密：<el-tag>{{ client.security ? client.security : 'auto' }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            传输协议：<el-tag>{{ inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp' }}</el-tag>
+                        </el-col>
+                    </el-row>
+                </el-card>
+            </div>
+        </el-card>
+    </el-main>
+    <!--<el-footer th:replace="v2ray/footer :: footer"></el-footer>-->
+
+    <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'" :visible.sync="inDL.visible" width="300px">
+        <el-form size="small" label-position="top">
+            <el-form-item>
+                <template slot="label">
+                    端口
+                    <el-button v-if="inDL.mode === 'add'" type="text" size="mini" @click="form.port = randomIntRange(10000,60000)">随机生成</el-button>
+                </template>
+                <el-input :disabled="inDL.mode === 'edit'" v-model="form.port" type="number" min="1" max="65535"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    用户id
+                    <el-button type="text" size="mini" @click="form.id = randomUUID()">重新生成</el-button>
+                </template>
+                <el-input v-model="form.id"></el-input>
+            </el-form-item>
+            <el-form-item label="额外id（alterId）">
+                <el-input v-model="form.alterId"></el-input>
+            </el-form-item>
+            <el-form-item label="加密">
+                <el-select v-model="form.security">
+                    <el-option label="auto（推荐）" value="auto"></el-option>
+                    <el-option label="aes-128-gcm" value="aes-128-gcm"></el-option>
+                    <el-option label="chacha20-poly1305" value="chacha20-poly1305"></el-option>
+                    <el-option label="none（不推荐）" value="none"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="传输协议">
+                <el-select v-model="form.network">
+                    <el-option label="tcp（推荐）" value="tcp"></el-option>
+                    <el-option label="kcp（底层使用udp协议）" value="kcp"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <el-button v-if="inDL.mode === 'add'" type="primary" size="small" @click="addInbound(form)" :loading="btnLoad">添加</el-button>
+                <el-button v-else type="primary" size="small" @click="editInbound(form)" :loading="btnLoad">修改</el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+</el-container>
+
+<div th:replace="common/common_js :: commonJs"></div>
+<script>
+
+    let app = new Vue({
+        el: '#app',
+        data: {
+            btnLoad: false,
+            defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
+            ip: location.hostname,
+            config: {},
+            inbounds: [],
+            inDL: { visible: false, mode: 'add' },
+            form: {}
+        },
+        methods: {
+            menuSelect: function (index) { console.log(index); location.href = index; },
+            getConfig: function () {
+                post({
+                    url: '/v2ray/config',
+                    success: data => {
+                        if (data.success) {
+                            this.config = JSON.parse(data.msg);
+                        } else {
+                            this.message({
+                                message: data.msg,
+                                type: 'error'
+                            });
+                        }
+                    },
+                    error: e => {
+                        this.message({
+                            message: e,
+                            type: 'error'
+                        });
+                    }
+                });
+            },
+            openAdd: function () {
+                this.form = {
+                    protocol: 'vmess', // TODO 默认vmess协议，以后支持更多协议
+                    port: randomIntRange(10000, 60000),
+                    id: randomUUID(),
+                    alterId: 64,
+                    security: 'auto',
+                    network: 'tcp'
+                };
+                this.inDL.mode = 'add';
+                this.inDL.visible = true;
+            },
+            openEdit: function(inbound, client) {
+                this.form = {
+                    protocol: inbound.protocol,
+                    port: inbound.port,
+                    id: client.id,
+                    alterId: client.alterId,
+                    security: client.security ? client.security : 'auto',
+                    network: inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp'
+                };
+                this.inDL.mode = 'edit';
+                this.inDL.visible = true;
+            },
+            del: function(inbound) {
+                this.confirm('确定要删除吗？', '删除账号')
+                    .then(() => {
+                        this.submit('/v2ray/inbound/del', {
+                            port: inbound.port
+                        });
+                    });
+            },
+            addInbound: function (form) {
+                let settings = {
+                    clients: [{
+                        id: form.id,
+                        alterId: form.alterId,
+                        security: form.security
+                    }]
+                };
+                let streamSettings = {
+                    network: form.network
+                };
+                this.submit('/v2ray/inbound/add', {
+                    port: form.port,
+                    protocol: form.protocol,
+                    settings: JSON.stringify(settings),
+                    streamSettings: JSON.stringify(streamSettings)
+                }, this.inDL);
+            },
+            editInbound: function (form) {
+                let settings = {
+                    clients: [{
+                        id: form.id,
+                        alterId: form.alterId,
+                        security: form.security
+                    }]
+                };
+                let streamSettings = {
+                    network: form.network
+                };
+                this.submit('/v2ray/inbound/edit', {
+                    port: form.port,
+                    protocol: form.protocol,
+                    settings: JSON.stringify(settings),
+                    streamSettings: JSON.stringify(streamSettings)
+                }, this.inDL);
+            },
+            restart: function() {
+                this.confirm('确定要重启吗？', '')
+                    .then(() => {
+                        this.submit('/v2ray/restart');
+                    });
+            },
+            stop: function() {
+                this.confirm('确定要关闭吗？', '')
+                    .then(() => {
+                        this.submit('/v2ray/stop');
+                    });
+            },
+            submit: function (url, form, dl) {
+                this.btnLoad = true;
+                post({
+                    url: url,
+                    data: form,
+                    success: data => {
+                        this.btnLoad = false;
+                        if (data.success && dl) {
+                            dl.visible = false;
+                        }
+                        let type = 'success';
+                        this.getConfig();
+                        if (!data.success) {
+                            type = 'error';
+                        }
+                        this.$message({
+                            message: data.msg,
+                            type: type
+                        });
+                    },
+                    error: e => {
+                        this.btnLoad = false;
+                        this.$message({
+                            message: e,
+                            type: 'error'
+                        });
+                    }
+                });
+            }
+        },
+        watch: {
+            'config': function (config) {
+                this.inbounds = config.inbounds;
+            }
+        },
+        mounted: function () {
+            this.getConfig();
+        }
+    });
+
+</script>
+
+</body>
+</html>

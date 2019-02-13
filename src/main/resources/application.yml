@@ -1,0 +1,15 @@
+server:
+  port: 80
+
+spring:
+  profiles:
+    active: prod
+
+user:
+  username: sprov
+  password: blog.sprov.xyz
+
+v2ray:
+  install: bash <(curl -L -s https://install.direct/go.sh)
+  update: bash <(curl -L -s https://install.direct/go.sh) -f
+  config-location: /etc/v2ray/config.json

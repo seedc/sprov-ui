@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="common/common_head :: commonHead('sprov-ui 登录')"></head>
+<body>
+
+<el-container id="app" v-cloak>
+    <el-main>
+        <el-row type="flex" justify="center">
+            <el-col :xs="24" :sm="20" :md="16" :lg="12">
+                <!-- 登录 -->
+                <transition name="el-fade-in-linear" appear>
+                    <el-card class="opaque">
+                        <el-row type="flex" justify="center">
+                            <el-col :xs="24" :sm="20" :md="16" :lg="12">
+                                <div style="text-align: center">
+                                    <h4 class="title">sprov-ui 登录</h4>
+                                </div>
+                                <el-form :model="user" status-icon>
+                                    <el-form-item prop="username">
+                                        <el-input v-model="user.username" @keydown.enter.native="login" placeholder="用户名" autofocus></el-input>
+                                    </el-form-item>
+                                    <el-form-item prop="password">
+                                        <el-input type="password" v-model="user.password" placeholder="密码" @keydown.enter.native="login"></el-input>
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-button type="primary" @click="login" :loading="buttonLoading" style="width: 100%;">{{ buttonLoading ? '登录中...' : '登录' }}</el-button>
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <div style="text-align: center">power by <a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
+                                    </el-form-item>
+                                </el-form>
+                            </el-col>
+                        </el-row>
+                    </el-card>
+                </transition>
+            </el-col>
+        </el-row>
+    </el-main>
+</el-container>
+
+<div th:include="common/common_js :: commonJs"></div>
+<script>
+    let app = new Vue({
+        el: '#app',
+        data: {
+            buttonLoading: false,
+            user: {}
+        },
+        methods: {
+            login: function () {
+                this.buttonLoading = true;
+                post({
+                    url: '/login',
+                    data: this.user,
+                    success: data => {
+                        this.buttonLoading = false;
+                        if (data.success) {
+                            location.href = "/v2ray/";
+                        } else {
+                            this.error(data.msg);
+                        }
+                    },
+                    error: () => {
+                        this.buttonLoading = false;
+                        this.error('发生网络错误，请检查网络连接');
+                    }
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>

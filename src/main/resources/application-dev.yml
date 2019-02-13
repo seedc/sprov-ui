@@ -1,0 +1,7 @@
+spring:
+  # 开发时设为 false，不缓存 thymeleaf 模板
+  thymeleaf:
+    cache: false
+
+v2ray:
+  config-location: D:/etc/v2ray/config.json
