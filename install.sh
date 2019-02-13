@@ -58,23 +58,27 @@ fi
 install_java() {
     if [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk curl -y
-    elif [[ x"${release}" == x"debian" ]]; then
-        apt-get install java-1.8.0-openjdk curl -y
-    elif [[ x"${release}" == x"ubuntu" ]]; then
-        apt-get install openjdk-8-jre-headless curl -y
+    elif [[ x"${release}" == x"debian" || x"${release}" == x"ubuntu" ]]; then
+        apt install default-jre curl -y
     fi
 }
 
 install_v2ray() {
     bash <(curl -L -s https://install.direct/go.sh) -f
+    systemctl start v2ray
 }
 
 close_firewall() {
-    if [[ x"${release}" == x"centos" || x"${release}" == x"debian" ]]; then
+    if [[ x"${release}" == x"centos" ]]; then
         systemctl stop firewalld
         systemctl disable firewalld
     elif [[ x"${release}" == x"ubuntu" ]]; then
         ufw disable
+    elif [[ x"${release}" == x"debian" ]]; then
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+        iptables -P FORWARD ACCEPT
+        iptables -F
     fi
 }
 
@@ -102,11 +106,7 @@ install_sprov-ui() {
     echo "" >> /etc/systemd/system/sprov-ui.service
     echo "[Service]" >> /etc/systemd/system/sprov-ui.service
     echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
-    if [[ x"${release}" == x"debian" ]]; then
-        java_cmd="/usr/share/java"
-    else
-        java_cmd="/usr/bin/java"
-    fi
+    java_cmd="/usr/bin/java"
     echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
     echo "" >> /etc/systemd/system/sprov-ui.service
     echo "[Install]" >> /etc/systemd/system/sprov-ui.service
