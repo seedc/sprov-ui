@@ -15,3 +15,5 @@
 ```
 wget -O install.sh -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/install.sh && bash install.sh
 ```
+# 详细教程
+https://blog.sprov.xyz/2019/02/09/sprov-ui/
