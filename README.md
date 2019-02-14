@@ -5,6 +5,7 @@
 ![2.png](2.png)
 
 # 支持的系统
+>建议在512MB内存及以上的vps搭建
  - CentOS 7（推荐）
  - Ubuntu 16
  - Ubuntu 18
