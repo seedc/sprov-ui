@@ -92,7 +92,8 @@ install_sprov-ui() {
     if [[ ! -e "/usr/local/sprov-ui" ]]; then
         mkdir /usr/local/sprov-ui
     fi
-    wget -N --no-check-certificate -O /usr/local/sprov-ui/sprov-ui.war https://github.com/sprov065/sprov-ui/releases/download/v1.0.0-beta/sprov-ui-1.0.0.war
+    last_version=$(curl --silent "https://api.github.com/repos/sprov065/sprov-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    wget -N --no-check-certificate -O /usr/local/sprov-ui/sprov-ui.war https://github.com/sprov065/sprov-ui/releases/download/${last_version}/sprov-ui-${last_version}.war
     if [[ $? -ne 0 ]]; then
         echo -e "${red}下载sprov-ui核心文件失败，请确保你的服务器能够下载Github的文件，如果多次安装失败，请参考手动安装教程${plain}"
         exit 1
