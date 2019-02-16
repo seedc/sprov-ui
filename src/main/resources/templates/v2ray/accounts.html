@@ -75,6 +75,34 @@
                         </el-col>
                     </el-row>
                 </el-card>
+                <el-card v-if="inbound.protocol === 'shadowsocks'">
+                    <div slot="header">
+                        <el-tag type="primary">{{ inbound.protocol }}</el-tag>
+                        <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
+                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                    </div>
+                    <el-row>
+                        <el-col :sm="12">
+                            IP：<el-tag>{{ ip }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            端口：<el-tag>{{ inbound.port }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col :sm="12">
+                            加密：<el-tag>{{ inbound.settings.method }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            密码：<el-tag>{{ inbound.settings.password }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col>
+                            网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                        </el-col>
+                    </el-row>
+                </el-card>
             </div>
         </el-card>
     </el-main>
@@ -82,37 +110,78 @@
 
     <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'" :visible.sync="inDL.visible" width="300px">
         <el-form size="small" label-position="top">
+            <el-form-item label="选择协议">
+                <el-select v-model="form.protocol" :disabled="inDL.mode !== 'add'">
+                    <el-option label="vmess" value="vmess"></el-option>
+                    <el-option label="shadowsocks" value="shadowsocks"></el-option>
+                </el-select>
+            </el-form-item>
             <el-form-item>
                 <template slot="label">
                     端口
                     <el-button v-if="inDL.mode === 'add'" type="text" size="mini" @click="form.port = randomIntRange(10000,60000)">随机生成</el-button>
                 </template>
-                <el-input :disabled="inDL.mode === 'edit'" v-model="form.port" type="number" min="1" max="65535"></el-input>
+                <el-input :disabled="inDL.mode !== 'add'" v-model="form.port" type="number" min="1" max="65535"></el-input>
             </el-form-item>
+        </el-form>
+        <!-- VMess 协议 -->
+        <el-form v-if="form.protocol === 'vmess'" size="small" label-position="top">
             <el-form-item>
                 <template slot="label">
                     用户id
-                    <el-button type="text" size="mini" @click="form.id = randomUUID()">重新生成</el-button>
+                    <el-button type="text" size="mini" @click="vmess.id = randomUUID()">重新生成</el-button>
                 </template>
-                <el-input v-model="form.id"></el-input>
+                <el-input v-model="vmess.id"></el-input>
             </el-form-item>
             <el-form-item label="额外id（alterId）">
-                <el-input v-model="form.alterId"></el-input>
+                <el-input v-model="vmess.alterId"></el-input>
             </el-form-item>
             <el-form-item label="加密">
-                <el-select v-model="form.security">
+                <el-select v-model="vmess.security">
                     <el-option label="auto（推荐）" value="auto"></el-option>
                     <el-option label="aes-128-gcm" value="aes-128-gcm"></el-option>
                     <el-option label="chacha20-poly1305" value="chacha20-poly1305"></el-option>
                     <el-option label="none（不推荐）" value="none"></el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item label="传输协议">
-                <el-select v-model="form.network">
+        </el-form>
+        <!-- shadowsocks 协议 -->
+        <el-form v-if="form.protocol === 'shadowsocks'" size="small" label-position="top">
+            <el-form-item label="加密">
+                <el-select v-model="ss.method">
+                    <el-option value="chacha20"></el-option>
+                    <el-option value="chacha20-ietf"></el-option>
+                    <el-option value="chacha20-ietf-poly1305"></el-option>
+                    <el-option value="aes-256-gcm"></el-option>
+                    <el-option value="aes-128-gcm"></el-option>
+                    <el-option label="aes-128-cfb（不推荐）" value="aes-256-cfb"></el-option>
+                    <el-option label="aes-128-cfb（不推荐）" value="aes-128-cfb"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    密码
+                    <el-button type="text" size="mini" @click="ss.password = randomSeq(10)">随机生成</el-button>
+                </template>
+                <el-input v-model="ss.password"></el-input>
+            </el-form-item>
+            <el-form-item label="网络">
+                <el-select v-model="ss.network">
+                    <el-option label="tcp + udp" value="tcp,udp"></el-option>
+                    <el-option value="tcp"></el-option>
+                    <el-option value="udp"></el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+        <el-form v-if="form.protocol === 'vmess'" size="small" label-position="top">
+            <el-form-item label="底层传输">
+                <el-select v-model="stream.network">
                     <el-option label="tcp（推荐）" value="tcp"></el-option>
                     <el-option label="kcp（底层使用udp协议）" value="kcp"></el-option>
                 </el-select>
             </el-form-item>
+        </el-form>
+        <el-form size="small" label-position="top">
             <el-form-item>
                 <el-button v-if="inDL.mode === 'add'" type="primary" size="small" @click="addInbound(form)" :loading="btnLoad">添加</el-button>
                 <el-button v-else type="primary" size="small" @click="editInbound(form)" :loading="btnLoad">修改</el-button>
@@ -122,163 +191,7 @@
 </el-container>
 
 <div th:replace="common/common_js :: commonJs"></div>
-<script>
-
-    let app = new Vue({
-        el: '#app',
-        data: {
-            btnLoad: false,
-            defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
-            ip: location.hostname,
-            config: {},
-            inbounds: [],
-            inDL: { visible: false, mode: 'add' },
-            form: {}
-        },
-        methods: {
-            menuSelect: function (index) { console.log(index); location.href = index; },
-            getConfig: function () {
-                post({
-                    url: '/v2ray/config',
-                    success: data => {
-                        if (data.success) {
-                            this.config = JSON.parse(data.msg);
-                        } else {
-                            this.message({
-                                message: data.msg,
-                                type: 'error'
-                            });
-                        }
-                    },
-                    error: e => {
-                        this.message({
-                            message: e,
-                            type: 'error'
-                        });
-                    }
-                });
-            },
-            openAdd: function () {
-                this.form = {
-                    protocol: 'vmess', // TODO 默认vmess协议，以后支持更多协议
-                    port: randomIntRange(10000, 60000),
-                    id: randomUUID(),
-                    alterId: 64,
-                    security: 'auto',
-                    network: 'tcp'
-                };
-                this.inDL.mode = 'add';
-                this.inDL.visible = true;
-            },
-            openEdit: function(inbound, client) {
-                this.form = {
-                    protocol: inbound.protocol,
-                    port: inbound.port,
-                    id: client.id,
-                    alterId: client.alterId,
-                    security: client.security ? client.security : 'auto',
-                    network: inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp'
-                };
-                this.inDL.mode = 'edit';
-                this.inDL.visible = true;
-            },
-            del: function(inbound) {
-                this.confirm('确定要删除吗？', '删除账号')
-                    .then(() => {
-                        this.submit('/v2ray/inbound/del', {
-                            port: inbound.port
-                        });
-                    });
-            },
-            addInbound: function (form) {
-                let settings = {
-                    clients: [{
-                        id: form.id,
-                        alterId: form.alterId,
-                        security: form.security
-                    }]
-                };
-                let streamSettings = {
-                    network: form.network
-                };
-                this.submit('/v2ray/inbound/add', {
-                    port: form.port,
-                    protocol: form.protocol,
-                    settings: JSON.stringify(settings),
-                    streamSettings: JSON.stringify(streamSettings)
-                }, this.inDL);
-            },
-            editInbound: function (form) {
-                let settings = {
-                    clients: [{
-                        id: form.id,
-                        alterId: form.alterId,
-                        security: form.security
-                    }]
-                };
-                let streamSettings = {
-                    network: form.network
-                };
-                this.submit('/v2ray/inbound/edit', {
-                    port: form.port,
-                    protocol: form.protocol,
-                    settings: JSON.stringify(settings),
-                    streamSettings: JSON.stringify(streamSettings)
-                }, this.inDL);
-            },
-            restart: function() {
-                this.confirm('确定要重启吗？', '')
-                    .then(() => {
-                        this.submit('/v2ray/restart');
-                    });
-            },
-            stop: function() {
-                this.confirm('确定要关闭吗？', '')
-                    .then(() => {
-                        this.submit('/v2ray/stop');
-                    });
-            },
-            submit: function (url, form, dl) {
-                this.btnLoad = true;
-                post({
-                    url: url,
-                    data: form,
-                    success: data => {
-                        this.btnLoad = false;
-                        if (data.success && dl) {
-                            dl.visible = false;
-                        }
-                        let type = 'success';
-                        this.getConfig();
-                        if (!data.success) {
-                            type = 'error';
-                        }
-                        this.$message({
-                            message: data.msg,
-                            type: type
-                        });
-                    },
-                    error: e => {
-                        this.btnLoad = false;
-                        this.$message({
-                            message: e,
-                            type: 'error'
-                        });
-                    }
-                });
-            }
-        },
-        watch: {
-            'config': function (config) {
-                this.inbounds = config.inbounds;
-            }
-        },
-        mounted: function () {
-            this.getConfig();
-        }
-    });
-
-</script>
+<script src="/res/js/v2ray/accounts.js?v=1.1.0"></script>
 
 </body>
 </html>
