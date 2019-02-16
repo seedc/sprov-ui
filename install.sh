@@ -88,6 +88,45 @@ close_firewall() {
     fi
 }
 
+set_systemd() {
+    reset="y"
+    first="y"
+    if [[ -f "/etc/systemd/system/sprov-ui.service" ]]; then
+        read -p "是否重新设置面板端口、用户名和密码[y/n]：" reset
+        first="n"
+    fi
+    if [[ x"$reset" == x"y" || x"$reset" == x"Y" ]]; then
+        read -p "请输入面板监听端口[默认80]：" port
+        read -p "请输入面板登录用户名[默认sprov]：" user
+        read -p "请输入面板登录密码[默认blog.sprov.xyz]：" pwd
+        if [[ -z "${port}" ]]; then
+            port=80
+        fi
+        if [[ -z "${user}" ]]; then
+            user="sprov"
+        fi
+        if [[ -z "${pwd}" ]]; then
+            pwd="blog.sprov.xyz"
+        fi
+        echo "[Unit]" > /etc/systemd/system/sprov-ui.service
+        echo "Description=sprov-ui Service" >> /etc/systemd/system/sprov-ui.service
+        echo "After=network.target" >> /etc/systemd/system/sprov-ui.service
+        echo "Wants=network.target" >> /etc/systemd/system/sprov-ui.service
+        echo "" >> /etc/systemd/system/sprov-ui.service
+        echo "[Service]" >> /etc/systemd/system/sprov-ui.service
+        echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
+        java_cmd="/usr/bin/java"
+        echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
+        echo "" >> /etc/systemd/system/sprov-ui.service
+        echo "[Install]" >> /etc/systemd/system/sprov-ui.service
+        echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
+        systemctl daemon-reload
+        if [[ x"${first}" == x"n" ]]; then
+            echo -e "${green}设置新的端口、用户名和密码后记得重启面板${plain}"
+        fi
+    fi
+}
+
 install_sprov-ui() {
     if [[ ! -e "/usr/local/sprov-ui" ]]; then
         mkdir /usr/local/sprov-ui
@@ -98,32 +137,9 @@ install_sprov-ui() {
         echo -e "${red}下载sprov-ui核心文件失败，请确保你的服务器能够下载Github的文件，如果多次安装失败，请参考手动安装教程${plain}"
         exit 1
     fi
-    read -p "请输入面板监听端口[默认80]：" port
-    read -p "请输入面板登录用户名[默认sprov]：" user
-    read -p "请输入面板登录密码[默认blog.sprov.xyz]：" pwd
-    if [[ -z "${port}" ]]; then
-        port=80
-    fi
-    if [[ -z "${user}" ]]; then
-        user="sprov"
-    fi
-    if [[ -z "${pwd}" ]]; then
-        pwd="blog.sprov.xyz"
-    fi
-    echo "[Unit]" > /etc/systemd/system/sprov-ui.service
-    echo "Description=sprov-ui Service" >> /etc/systemd/system/sprov-ui.service
-    echo "After=network.target" >> /etc/systemd/system/sprov-ui.service
-    echo "Wants=network.target" >> /etc/systemd/system/sprov-ui.service
-    echo "" >> /etc/systemd/system/sprov-ui.service
-    echo "[Service]" >> /etc/systemd/system/sprov-ui.service
-    echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
-    java_cmd="/usr/bin/java"
-    echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
-    echo "" >> /etc/systemd/system/sprov-ui.service
-    echo "[Install]" >> /etc/systemd/system/sprov-ui.service
-    echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
-    systemctl daemon-reload
-    echo -e "${green}v2ray面板安装成功${plain}\n"
+    set_systemd
+    echo ""
+    echo -e "${green}sprov-ui面板安装成功${plain}\n"
     echo -e "面板监听端口（不是v2ray端口）：${green}${port}${plain}"
     echo -e "面板登录用户名：${green}${user}${plain}"
     echo -e "面板登录密码：${green}${pwd}${plain}"
