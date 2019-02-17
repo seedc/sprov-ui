@@ -93,7 +93,7 @@ user="sprov"
 pwd="blog.sprov.xyz"
 
 init_config() {
-    if [[ ! e "/etc/sprov-ui" ]]; then
+    if [[ ! -e "/etc/sprov-ui" ]]; then
         mkdir /etc/sprov-ui
     fi
     echo "port=${port}" > /etc/sprov-ui/sprov-ui.conf
