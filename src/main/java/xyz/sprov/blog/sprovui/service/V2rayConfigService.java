@@ -4,21 +4,22 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import xyz.sprov.blog.sprovui.venum.Protocol;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
+import xyz.sprov.blog.sprovui.venum.Protocol;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-@Service
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.stereotype.Service;
+
+//@Service
 public class V2rayConfigService {
 
-    @Value("${v2ray.config-location}")
-    private String configLocation;
+//    @Value("${v2ray.config-location}")
+    private String configLocation = "/etc/v2ray/config.json";
 
     private final Pattern uuidPattern = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 

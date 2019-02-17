@@ -1,7 +1,8 @@
 package xyz.sprov.blog.sprovui.bean;
 
 import com.alibaba.fastjson.JSONObject;
-import org.springframework.validation.BindingResult;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+//import org.springframework.validation.BindingResult;
 
 /**
  * 保存从服务器返回到用户的消息
@@ -18,15 +19,6 @@ public class Msg {
 
     public Msg(String msg) {
         this.msg = msg;
-    }
-
-    public Msg(BindingResult result) {
-        if (result.hasErrors()) {
-            this.success = false;
-            this.msg = result.getAllErrors().get(0).getDefaultMessage();
-        } else {
-            this.success = true;
-        }
     }
 
     public Msg(boolean success, String msg) {
@@ -71,6 +63,6 @@ public class Msg {
 
     @Override
     public String toString() {
-        return JSONObject.toJSONString(this);
+        return JSONObject.toJSONString(this, SerializerFeature.WriteMapNullValue);
     }
 }

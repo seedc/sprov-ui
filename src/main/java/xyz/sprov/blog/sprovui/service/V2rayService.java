@@ -1,8 +1,8 @@
 package xyz.sprov.blog.sprovui.service;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.stereotype.Service;
 import xyz.sprov.blog.sprovui.util.ExecUtil;
 import xyz.sprov.blog.sprovui.exception.V2rayException;
 
@@ -10,17 +10,17 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
+//@Service
 public class V2rayService {
 
-    @Value("${spring.profiles.active}")
-    private String active;
+//    @Value("${spring.profiles.active}")
+//    private String active;
 
-    @Value("${v2ray.install}")
-    private String installCmd;
+//    @Value("${v2ray.install}")
+    private String installCmd = "bash <(curl -L -s https://install.direct/go.sh)";
 
-    @Value("${v2ray.update}")
-    private String updateCmd;
+//    @Value("${v2ray.update}")
+    private String updateCmd = "bash <(curl -L -s https://install.direct/go.sh) -f";
 
     private String startCmd = "systemctl start v2ray";
     private String restartCmd = "systemctl restart v2ray";
@@ -30,11 +30,10 @@ public class V2rayService {
 
     @PostConstruct
     public void init() {
-        if (active.equals("prod") && !SystemUtils.IS_OS_LINUX) {
-            System.err.println("本程序只支持Linux系统");
-            System.exit(-1);
-        }
-        // TODO 检查系统，修改对应的启动关闭命令
+//        if (active.equals("prod") && !SystemUtils.IS_OS_LINUX) {
+//            System.err.println("本程序只支持Linux系统");
+//            System.exit(-1);
+//        }
     }
 
     /**

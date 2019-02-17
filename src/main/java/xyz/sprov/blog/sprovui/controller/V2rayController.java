@@ -1,37 +1,32 @@
 package xyz.sprov.blog.sprovui.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayException;
 import xyz.sprov.blog.sprovui.service.V2rayConfigService;
 import xyz.sprov.blog.sprovui.service.V2rayService;
+import xyz.sprov.blog.sprovui.util.Context;
 
-@Controller
-@RequestMapping("v2ray")
+//@Controller
+//@RequestMapping("v2ray")
 public class V2rayController {
 
-    @Autowired
-    private V2rayService service;
+//    @Autowired
+    private V2rayService service = Context.v2rayService;
 
-    @Autowired
-    private V2rayConfigService configService;
+//    @Autowired
+    private V2rayConfigService configService = Context.v2rayConfigService;
 
-    @GetMapping("")
+//    @GetMapping("")
     public String index() {
         return "v2ray/index";
     }
 
-    @GetMapping("accounts")
+//    @GetMapping("accounts")
     public String accounts() {
         return "v2ray/accounts";
     }
 
-    @GetMapping("clients")
+//    @GetMapping("clients")
     public String clients() { return "v2ray/clients"; }
 
     /**
@@ -40,8 +35,8 @@ public class V2rayController {
      * 1：未运行
      * 2：未安装
      */
-    @ResponseBody
-    @GetMapping("status")
+//    @ResponseBody
+//    @GetMapping("status")
     public Msg status() {
         try {
             int status = service.status();
@@ -64,8 +59,8 @@ public class V2rayController {
     /**
      * 安装v2ray
      */
-    @ResponseBody
-    @PostMapping("install")
+//    @ResponseBody
+//    @PostMapping("install")
     public Msg install() {
         try {
             if (service.isInstalled()) {
@@ -96,8 +91,8 @@ public class V2rayController {
     /**
      * 升级v2ray
      */
-    @ResponseBody
-    @PostMapping("update")
+//    @ResponseBody
+//    @PostMapping("update")
     public Msg update() {
         try {
             if (service.update()) {
@@ -115,8 +110,8 @@ public class V2rayController {
     /**
      * 启动v2ray
      */
-    @ResponseBody
-    @PostMapping("start")
+//    @ResponseBody
+//    @PostMapping("start")
     public Msg start() {
         try {
             if (!service.isInstalled()) {
@@ -133,8 +128,8 @@ public class V2rayController {
         }
     }
 
-    @ResponseBody
-    @PostMapping("restart")
+//    @ResponseBody
+//    @PostMapping("restart")
     public Msg restart() {
         try {
             if (!service.isInstalled()) {
@@ -154,8 +149,8 @@ public class V2rayController {
     /**
      * 关闭v2ray
      */
-    @ResponseBody
-    @PostMapping("stop")
+//    @ResponseBody
+//    @PostMapping("stop")
     public Msg stop() {
         try {
             if (!service.isInstalled()) {
@@ -175,8 +170,8 @@ public class V2rayController {
     /**
      * 获取完整的配置文件内容
      */
-    @ResponseBody
-    @PostMapping("config")
+//    @ResponseBody
+//    @PostMapping("config")
     public Msg config() {
         try {
             return new Msg(true, configService.config());

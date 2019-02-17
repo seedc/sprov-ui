@@ -88,10 +88,45 @@ close_firewall() {
     fi
 }
 
+port=80
+user="sprov"
+pwd="blog.sprov.xyz"
+
+init_config() {
+    if [[ ! e "/etc/sprov-ui" ]]; then
+        mkdir /etc/sprov-ui
+    fi
+    echo "port=${port}" > /etc/sprov-ui/sprov-ui.conf
+    echo "username=${user}" >> /etc/sprov-ui/sprov-ui.conf
+    echo "password=${pwd}" >> /etc/sprov-ui/sprov-ui.conf
+
+    echo ""
+    echo -e "面板监听端口（不是v2ray端口）：${green}${port}${plain}"
+    echo -e "面板登录用户名：${green}${user}${plain}"
+    echo -e "面板登录密码：${green}${pwd}${plain}"
+}
+
+init_service() {
+    echo "[Unit]" > /etc/systemd/system/sprov-ui.service
+    echo "Description=sprov-ui Service" >> /etc/systemd/system/sprov-ui.service
+    echo "After=network.target" >> /etc/systemd/system/sprov-ui.service
+    echo "Wants=network.target" >> /etc/systemd/system/sprov-ui.service
+    echo "" >> /etc/systemd/system/sprov-ui.service
+    echo "[Service]" >> /etc/systemd/system/sprov-ui.service
+    echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
+    java_cmd="/usr/bin/java"
+    echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.jar" >> /etc/systemd/system/sprov-ui.service
+    echo "" >> /etc/systemd/system/sprov-ui.service
+    echo "[Install]" >> /etc/systemd/system/sprov-ui.service
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
+    systemctl daemon-reload
+}
+
 set_systemd() {
+    init_service
     reset="y"
     first="y"
-    if [[ -f "/etc/systemd/system/sprov-ui.service" ]]; then
+    if [[ -f "/etc/sprov-ui/sprov-ui.conf" ]]; then
         read -p "是否重新设置面板端口、用户名和密码[y/n]：" reset
         first="n"
     fi
@@ -108,21 +143,10 @@ set_systemd() {
         if [[ -z "${pwd}" ]]; then
             pwd="blog.sprov.xyz"
         fi
-        echo "[Unit]" > /etc/systemd/system/sprov-ui.service
-        echo "Description=sprov-ui Service" >> /etc/systemd/system/sprov-ui.service
-        echo "After=network.target" >> /etc/systemd/system/sprov-ui.service
-        echo "Wants=network.target" >> /etc/systemd/system/sprov-ui.service
-        echo "" >> /etc/systemd/system/sprov-ui.service
-        echo "[Service]" >> /etc/systemd/system/sprov-ui.service
-        echo "Type=simple" >> /etc/systemd/system/sprov-ui.service
-        java_cmd="/usr/bin/java"
-        echo "ExecStart=${java_cmd} -jar /usr/local/sprov-ui/sprov-ui.war --server.port=${port} --user.username=${user} --user.password=${pwd}" >> /etc/systemd/system/sprov-ui.service
-        echo "" >> /etc/systemd/system/sprov-ui.service
-        echo "[Install]" >> /etc/systemd/system/sprov-ui.service
-        echo "WantedBy=multi-user.target" >> /etc/systemd/system/sprov-ui.service
-        systemctl daemon-reload
+        init_config
         if [[ x"${first}" == x"n" ]]; then
-            echo -e "${green}设置新的端口、用户名和密码后记得重启面板${plain}"
+            echo ""
+            echo -e "${green}设置了新的端口、用户名和密码后记得重启面板${plain}"
         fi
     fi
 }
@@ -131,8 +155,11 @@ install_sprov-ui() {
     if [[ ! -e "/usr/local/sprov-ui" ]]; then
         mkdir /usr/local/sprov-ui
     fi
+    if [[ -f "/usr/local/sprov-ui/sprov-ui.war" ]]; then
+        rm /usr/local/sprov-ui/sprov-ui.war -f
+    fi
     last_version=$(curl --silent "https://api.github.com/repos/sprov065/sprov-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    wget -N --no-check-certificate -O /usr/local/sprov-ui/sprov-ui.war https://github.com/sprov065/sprov-ui/releases/download/${last_version}/sprov-ui-${last_version}.war
+    wget -N --no-check-certificate -O /usr/local/sprov-ui/sprov-ui.jar https://github.com/sprov065/sprov-ui/releases/download/${last_version}/sprov-ui-${last_version}.jar
     if [[ $? -ne 0 ]]; then
         echo -e "${red}下载sprov-ui核心文件失败，请确保你的服务器能够下载Github的文件，如果多次安装失败，请参考手动安装教程${plain}"
         exit 1
@@ -140,17 +167,16 @@ install_sprov-ui() {
     set_systemd
     echo ""
     echo -e "${green}sprov-ui面板安装成功${plain}\n"
-    echo -e "面板监听端口（不是v2ray端口）：${green}${port}${plain}"
-    echo -e "面板登录用户名：${green}${user}${plain}"
-    echo -e "面板登录密码：${green}${pwd}${plain}"
     echo ""
     echo -e "开启面板：systemctl start sprov-ui"
     echo -e "关闭面板：systemctl stop sprov-ui"
     echo -e "重启面板：systemctl restart sprov-ui"
-    echo -e "查看面板运行状态：systemctl status sprov-ui"
+    echo -e "运行状态：systemctl status sprov-ui"
+    echo -e "开机启动：systemctl enable sprov-ui"
+    echo -e "取消开机启动：systemctl disable sprov-ui"
     echo ""
-    echo -e "完全启动面板大约需要十秒左右，若启动面板失败，请使用以下命令手动启动检查问题所在："
-    echo -e "java -jar /usr/local/sprov-ui/sprov-ui.war"
+    echo -e "若启动面板失败，请使用以下命令手动启动检查问题所在："
+    echo -e "/usr/bin/java -jar /usr/local/sprov-ui/sprov-ui.jar"
     echo ""
     echo -e "若未安装bbr等加速工具，推荐使用以下命令一键安装bbr："
     echo -e "wget --no-check-certificate https://github.com/sprov065/blog/raw/master/bbr.sh && bash bbr.sh"

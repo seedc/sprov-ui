@@ -2,23 +2,19 @@ package xyz.sprov.blog.sprovui.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
 import xyz.sprov.blog.sprovui.service.V2rayConfigService;
+import xyz.sprov.blog.sprovui.util.Context;
 
 import java.io.IOException;
 
-@Controller
-@RequestMapping("v2ray/inbound")
+//@Controller
+//@RequestMapping("v2ray/inbound")
 public class InboundsController {
 
-    @Autowired
-    private V2rayConfigService configService;
+//    @Autowired
+    private V2rayConfigService configService = Context.v2rayConfigService;
 
     private JSONObject getInbound(int port,
                                   String protocol,
@@ -50,8 +46,8 @@ public class InboundsController {
      * @param settings 一个JSON字符串
      * @param streamSettings 一个JSON字符串
      */
-    @ResponseBody
-    @PostMapping("add")
+//    @ResponseBody
+//    @PostMapping("add")
     public Msg add(int port,
                    String protocol,
                    String settings,
@@ -78,8 +74,8 @@ public class InboundsController {
         }
     }
 
-    @ResponseBody
-    @PostMapping("edit")
+//    @ResponseBody
+//    @PostMapping("edit")
     public Msg edit(int port,
                     String protocol,
                     String settings,
@@ -101,8 +97,8 @@ public class InboundsController {
         }
     }
 
-    @ResponseBody
-    @PostMapping("del")
+//    @ResponseBody
+//    @PostMapping("del")
     public Msg del(int port) {
         try {
             configService.delInbound(port);
@@ -115,8 +111,8 @@ public class InboundsController {
     /**
      * 添加一个VMess用户
      */
-    @ResponseBody
-    @PostMapping("vmess/add")
+//    @ResponseBody
+//    @PostMapping("vmess/add")
     public Msg vmessAdd(int port, String id, int alterId, String secure) {
         JSONObject client = new JSONObject();
         client.put("port", port);
@@ -136,8 +132,8 @@ public class InboundsController {
     /**
      * 删除一个VMess入站协议
      */
-    @ResponseBody
-    @PostMapping("vmess/del")
+//    @ResponseBody
+//    @PostMapping("vmess/del")
     public Msg vmessDel(int port, String uuid) {
         return new Msg(false);
     }
@@ -145,8 +141,8 @@ public class InboundsController {
     /**
      * 删除一个ss入站协议
      */
-    @ResponseBody
-    @PostMapping("ss/del")
+//    @ResponseBody
+//    @PostMapping("ss/del")
     public Msg ssDel(int port) {
         return new Msg(false);
     }
@@ -154,8 +150,8 @@ public class InboundsController {
     /**
      * 删除一个tg代理入站协议
      */
-    @ResponseBody
-    @PostMapping("mtproto/del")
+//    @ResponseBody
+//    @PostMapping("mtproto/del")
     public Msg mtprotoDel() {
         return new Msg(false);
     }

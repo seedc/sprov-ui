@@ -1,15 +1,13 @@
 package xyz.sprov.blog.sprovui.service;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import xyz.sprov.blog.sprovui.bean.Status;
+import xyz.sprov.blog.sprovui.exception.V2rayException;
+import xyz.sprov.blog.sprovui.util.Context;
+import xyz.sprov.blog.sprovui.util.DateUtil;
 import xyz.sprov.blog.sprovui.util.ExecUtil;
 import xyz.sprov.blog.sprovui.util.FileUtil;
-import xyz.sprov.blog.sprovui.exception.V2rayException;
-import xyz.sprov.blog.sprovui.bean.Status;
-import xyz.sprov.blog.sprovui.util.DateUtil;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,18 +21,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Service
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.stereotype.Service;
+
+//@Service
 public class ServerService {
 
-    @Autowired
-    private V2rayService v2rayService;
+//    @Autowired
+    private V2rayService v2rayService = Context.v2rayService;
 
     private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
     private GetSystemInfoThread thread = new GetSystemInfoThread();
 
-    @PostConstruct
-    public void init() {
+    public ServerService() {
         executor.scheduleAtFixedRate(thread, 0, 1, TimeUnit.SECONDS);
     }
 
@@ -42,7 +42,7 @@ public class ServerService {
      * 获取系统所有状态
      */
     public Collection<Status> statuses(HttpServletRequest request) throws V2rayException {
-        List<Status> statuses = new ArrayList<>();
+        List<Status> statuses = new ArrayList<>(9);
         statuses.add(v2rayStatus());
         statuses.add(uptime());
         statuses.add(ip(request));
@@ -355,43 +355,43 @@ public class ServerService {
                 v2rayStatus();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 uptime();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 computeCpuRate();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 computeMemory();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 computeHardDisk();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 loads();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
             try {
                 networkSpeed();
             } catch (Exception e) {
 //                e.printStackTrace();
-                System.err.println(e.getMessage());
+//                System.err.println(e.getMessage());
             }
         }
     }
