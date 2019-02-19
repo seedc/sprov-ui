@@ -3,6 +3,7 @@ package xyz.sprov.blog.sprovui.util;
 import xyz.sprov.blog.sprovui.controller.InboundsController;
 import xyz.sprov.blog.sprovui.controller.ServerController;
 import xyz.sprov.blog.sprovui.controller.V2rayController;
+import xyz.sprov.blog.sprovui.filter.EncodingFilter;
 import xyz.sprov.blog.sprovui.filter.LoginFilter;
 import xyz.sprov.blog.sprovui.route.BaseRoute;
 import xyz.sprov.blog.sprovui.route.InboundsRoute;
@@ -16,6 +17,7 @@ import xyz.sprov.blog.sprovui.transformer.JsonTransformer;
 public class Context {
 
     public static final LoginFilter loginFilter = new LoginFilter();
+    public static final EncodingFilter encodingFilter = new EncodingFilter();
 
     public static final JsonTransformer jsonTransformer = new JsonTransformer();
 

@@ -9,7 +9,7 @@ import static xyz.sprov.blog.sprovui.util.Context.*;
 public class SprovUISparkApp {
 
     static {
-//        System.setProperty("file.encoding", "UTF-8");
+        System.setProperty("file.encoding", "UTF-8");
     }
 
     private static int port = Config.getPort();
@@ -25,6 +25,9 @@ public class SprovUISparkApp {
         });
 
         staticFiles.location("/static");
+
+        before("", encodingFilter);
+        before("/*", encodingFilter);
 
         get("/", baseRoute.index());
         post("/login", baseRoute.login(), jsonTransformer);
