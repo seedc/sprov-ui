@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
 import xyz.sprov.blog.sprovui.venum.Protocol;
 
@@ -22,6 +23,12 @@ public class V2rayConfigService {
     private String configLocation = "/etc/v2ray/config.json";
 
     private final Pattern uuidPattern = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
+    public V2rayConfigService() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            configLocation = "d:" + configLocation;
+        }
+    }
 
     /**
      * 获取v2ray的配置文件内容，以字符串形式

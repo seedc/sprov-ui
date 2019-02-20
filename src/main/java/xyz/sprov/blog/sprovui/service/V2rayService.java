@@ -1,14 +1,14 @@
 package xyz.sprov.blog.sprovui.service;
 
-import org.apache.commons.lang3.SystemUtils;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.stereotype.Service;
-import xyz.sprov.blog.sprovui.util.ExecUtil;
 import xyz.sprov.blog.sprovui.exception.V2rayException;
+import xyz.sprov.blog.sprovui.util.ExecUtil;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.stereotype.Service;
 
 //@Service
 public class V2rayService {
@@ -58,16 +58,20 @@ public class V2rayService {
      * 2：未安装
      */
     public int status() throws IOException, InterruptedException {
-        String result = ExecUtil.execForResult("systemctl status v2ray.service");
+        String result = ExecUtil.execForResult("sh", "-c", "systemctl status v2ray  | grep Active | awk '{print $3}' | cut -d \"(\" -f2 | cut -d \")\" -f1");
         if (result.contains("could not be found.")) {
             return 2;
-        }
-        result = ExecUtil.execForResult("sh", "-c", "ps -ef | grep v2ray | grep -v grep | awk '{print $2}'");
-        if (result.length() > 0) {
-            return 0;
-        } else {
+        } else if (result.contains("dead")) {
             return 1;
+        } else {
+            return 0;
         }
+//        result = ExecUtil.execForResult("sh", "-c", "ps -ef | grep v2ray | grep -v grep | awk '{print $2}'");
+//        if (result.length() > 0) {
+//            return 0;
+//        } else {
+//            return 1;
+//        }
     }
 
     /**

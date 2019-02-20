@@ -117,9 +117,9 @@ public class V2rayController {
             if (!service.isInstalled()) {
                 return new Msg(false, "v2ray尚未安装，请先安装");
             } else if (service.start()) {
-                return new Msg(true, "启动成功");
+                return new Msg(true, "操作成功，如配置有误可能会导致重启失败");
             }
-            return new Msg(false, "启动失败，原因未知");
+            return new Msg(false, "启动失败，请使用systemctl status v2ray -l命令查看失败原因");
         } catch (V2rayException e) {
             return new Msg(false, e.getMessage());
         } catch (Exception e) {
@@ -135,9 +135,9 @@ public class V2rayController {
             if (!service.isInstalled()) {
                 return new Msg(false, "v2ray尚未安装，请先安装");
             } else if (service.restart()) {
-                return new Msg(true, "重启成功");
+                return new Msg(true, "操作成功，如配置有误可能会导致重启失败");
             }
-            return new Msg(false, "重启失败，原因未知");
+            return new Msg(false, "重启失败，请使用systemctl status v2ray -l命令查看失败原因");
         } catch (V2rayException e) {
             return new Msg(false, e.getMessage());
         } catch (Exception e) {

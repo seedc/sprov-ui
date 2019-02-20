@@ -24,6 +24,8 @@ public class SprovUISparkApp {
             System.exit(1);
         });
 
+        exception(Exception.class, (exception, request, response) -> System.out.println(exception.getMessage()));
+
         staticFiles.location("/static");
 
         before("", encodingFilter);

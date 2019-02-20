@@ -1,3 +1,30 @@
+let formRules = {
+    port: [
+        { type: 'integer', min: 1, max: 65535, required: true, message: '范围1-65535且为整数', trigger: 'blur' },
+    ]
+};
+
+let vmessRules = {
+    alterId: [
+        { type: 'integer', min: 0, max: 65535, required: true, message: '范围0-65535且为整数', trigger: 'blur' }
+    ]
+};
+
+let ssRules = {
+    password: [
+        { required: true, message: '请输入密码', trigger: 'blur' }
+    ]
+};
+
+let dokoRules = {
+    address: [
+        { len: 3, required: true, message: '请输入一个IP或域名', trigger: 'blur' }
+    ],
+    port: [
+        { type: 'integer', min: 1, max: 65535, required: true, message: '范围1-65535且为整数', trigger: 'blur' },
+    ]
+};
+
 let app = new Vue({
     el: '#app',
     data: {
@@ -7,13 +34,18 @@ let app = new Vue({
         config: {},
         inbounds: [],
         inDL: { visible: false, mode: 'add' },
+        formRules: formRules,
+        vmessRules: vmessRules,
+        ssRules: ssRules,
+        dokoRules: dokoRules,
         form: {},
         vmess: {},
         ss: {},
+        doko: {},
         stream: {}
     },
     methods: {
-        menuSelect: function (index) { console.log(index); location.href = index; },
+        menuSelect: function (index) { location.href = index; },
         getConfig: function () {
             post({
                 url: '/v2ray/config',
@@ -50,13 +82,17 @@ let app = new Vue({
                 password: randomSeq(10),
                 network: 'tcp,udp'
             };
+            this.doko = {
+                address: '',
+                port: '',
+                network: 'tcp,udp'
+            };
             this.stream = {
                 network: 'tcp'
             };
             this.inDL.mode = 'add';
             this.inDL.visible = true;
         },
-        // TODO
         openEdit: function(inbound, client) {
             this.form = {
                 protocol: inbound.protocol,
@@ -75,7 +111,13 @@ let app = new Vue({
                 this.ss = {
                     method: inbound.settings.method,
                     password: inbound.settings.password,
-                    network: inbound.settings.network ? inbound.settings.network : 'tcp',
+                    network: inbound.settings.network ? inbound.settings.network : 'tcp'
+                };
+            } else if (inbound.protocol === 'dokodemo-door') {
+                this.doko = {
+                    address: inbound.settings.address,
+                    port: inbound.settings.port,
+                    network: inbound.settings.network ? inbound.settings.network : 'tcp'
                 };
             }
             this.inDL.mode = 'edit';
@@ -112,6 +154,13 @@ let app = new Vue({
                     password: ss.password,
                     network: ss.network
                 };
+            } else if (form.protocol === 'dokodemo-door') {
+                let doko = this.doko;
+                settings = {
+                    address: doko.address,
+                    port: doko.port,
+                    network: doko.network
+                };
             }
             return {
                 port: form.port,
@@ -120,11 +169,58 @@ let app = new Vue({
                 streamSettings: JSON.stringify(streamSettings)
             };
         },
+        clearValidates: function() {
+            if (this.$refs['inForm']) {
+                this.$refs['inForm'].clearValidate();
+            }
+            if (this.$refs['vmessForm']) {
+                this.$refs['vmessForm'].clearValidate();
+            }
+            if (this.$refs['ssForm']) {
+                this.$refs['ssForm'].clearValidate();
+            }
+            if (this.$refs['dokoForm']) {
+                this.$refs['dokoForm'].clearValidate();
+            }
+        },
+        validateForms: function(form, callback) {
+            this.$refs['inForm'].validate(valid => {
+                if (valid) {
+                    if (form.protocol === 'vmess') {
+                        this.$refs['vmessForm'].validate(callback);
+                    } else if (form.protocol === 'shadowsocks') {
+                        this.$refs['ssForm'].validate(callback);
+                    } else if (form.protocol === 'dokodemo-door') {
+                        this.$refs['dokoForm'].validate(callback);
+                    }
+                } else {
+                    execute(callback, valid);
+                }
+            });
+        },
         addInbound: function (form) {
-            this.submit('/v2ray/inbound/add', this.getInbound(form), this.inDL);
+            this.validateForms(form, valid => {
+                if (valid) {
+                    this.submit('/v2ray/inbound/add', this.getInbound(form), this.inDL);
+                } else {
+                    this.$message({
+                        message: '配置填写有误，请检查错误信息',
+                        type: 'error'
+                    });
+                }
+            });
         },
         editInbound: function (form) {
-            this.submit('/v2ray/inbound/edit', this.getInbound(form), this.inDL);
+            this.validateForms(form, valid => {
+                if (valid) {
+                    this.submit('/v2ray/inbound/edit', this.getInbound(form), this.inDL);
+                } else {
+                    this.$message({
+                        message: '配置填写有误，请检查错误信息',
+                        type: 'error'
+                    });
+                }
+            });
         },
         restart: function() {
             this.confirm('确定要重启吗？', '')

@@ -103,38 +103,74 @@
                         </el-col>
                     </el-row>
                 </el-card>
+                <el-card v-if="inbound.protocol === 'dokodemo-door'">
+                    <div slot="header">
+                        <el-tag type="primary">{{ inbound.protocol }}</el-tag>
+                        <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
+                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                    </div>
+                    <el-row>
+                        <el-col :sm="12">
+                            IP：<el-tag>{{ ip }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            端口：<el-tag>{{ inbound.port }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col :sm="12">
+                            转发的地址：<el-tag>{{ inbound.settings.address }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            转发的端口：<el-tag>{{ inbound.settings.port }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col>
+                            转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                        </el-col>
+                    </el-row>
+                </el-card>
             </div>
         </el-card>
     </el-main>
     <!--<el-footer th:replace="v2ray/footer :: footer"></el-footer>-->
 
-    <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'" :visible.sync="inDL.visible" width="300px">
-        <el-form size="small" label-position="top">
+    <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'"
+               :visible.sync="inDL.visible"
+               width="300px" @close="clearValidates">
+        <el-form :model="form" :rules="formRules"
+                 ref="inForm" size="small"
+                 label-position="top">
             <el-form-item label="选择协议">
                 <el-select v-model="form.protocol" :disabled="inDL.mode !== 'add'">
                     <el-option label="vmess" value="vmess"></el-option>
                     <el-option label="shadowsocks" value="shadowsocks"></el-option>
+                    <el-option label="dokodemo-door（端口转发）" value="dokodemo-door"></el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item>
+            <el-form-item prop="port">
                 <template slot="label">
                     端口
                     <el-button v-if="inDL.mode === 'add'" type="text" size="mini" @click="form.port = randomIntRange(10000,60000)">随机生成</el-button>
                 </template>
-                <el-input :disabled="inDL.mode !== 'add'" v-model="form.port" type="number" min="1" max="65535"></el-input>
+                <el-input :disabled="inDL.mode !== 'add'" v-model.number="form.port" type="number"></el-input>
             </el-form-item>
         </el-form>
         <!-- VMess 协议 -->
-        <el-form v-if="form.protocol === 'vmess'" size="small" label-position="top">
+        <el-form v-if="form.protocol === 'vmess'"
+                 ref="vmessForm" :rules="vmessRules"
+                 :model="vmess" size="small"
+                 label-position="top">
             <el-form-item>
                 <template slot="label">
                     用户id
                     <el-button type="text" size="mini" @click="vmess.id = randomUUID()">重新生成</el-button>
                 </template>
-                <el-input v-model="vmess.id"></el-input>
+                <el-input v-model="vmess.id" disabled></el-input>
             </el-form-item>
-            <el-form-item label="额外id（alterId）">
-                <el-input v-model="vmess.alterId"></el-input>
+            <el-form-item label="额外id（alterId）" prop="alterId">
+                <el-input type="number" v-model.number="vmess.alterId"></el-input>
             </el-form-item>
             <el-form-item label="加密">
                 <el-select v-model="vmess.security">
@@ -146,7 +182,10 @@
             </el-form-item>
         </el-form>
         <!-- shadowsocks 协议 -->
-        <el-form v-if="form.protocol === 'shadowsocks'" size="small" label-position="top">
+        <el-form v-if="form.protocol === 'shadowsocks'"
+                 ref="ssForm" :rules="ssRules"
+                 :model="ss" size="small"
+                 label-position="top">
             <el-form-item label="加密">
                 <el-select v-model="ss.method">
                     <el-option value="chacha20"></el-option>
@@ -158,12 +197,12 @@
                     <el-option label="aes-128-cfb（不推荐）" value="aes-128-cfb"></el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item>
+            <el-form-item prop="password">
                 <template slot="label">
                     密码
                     <el-button type="text" size="mini" @click="ss.password = randomSeq(10)">随机生成</el-button>
                 </template>
-                <el-input v-model="ss.password"></el-input>
+                <el-input v-model.trim="ss.password"></el-input>
             </el-form-item>
             <el-form-item label="网络">
                 <el-select v-model="ss.network">
@@ -173,7 +212,29 @@
                 </el-select>
             </el-form-item>
         </el-form>
-        <el-form v-if="form.protocol === 'vmess'" size="small" label-position="top">
+        <!-- dokodemo-door 协议 -->
+        <el-form v-if="form.protocol === 'dokodemo-door'"
+                 ref="dokoForm" :rules="dokoRules"
+                 :model="doko" size="small"
+                 label-position="top">
+            <el-form-item label="待转发的IP或域名" prop="address">
+                <el-input v-model.trim="doko.address"></el-input>
+            </el-form-item>
+            <el-form-item label="转发的端口" prop="port">
+                <el-input type="number" v-model.number="doko.port"></el-input>
+            </el-form-item>
+            <el-form-item label="转发底层协议">
+                <el-select v-model="doko.network">
+                    <el-option label="tcp + udp" value="tcp,udp"></el-option>
+                    <el-option value="tcp"></el-option>
+                    <el-option value="udp"></el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+        <!-- streamSettings -->
+        <el-form v-if="form.protocol === 'vmess'"
+                 size="small"
+                 label-position="top">
             <el-form-item label="底层传输">
                 <el-select v-model="stream.network">
                     <el-option label="tcp（推荐）" value="tcp"></el-option>
@@ -191,7 +252,7 @@
 </el-container>
 
 <div th:replace="common/common_js :: commonJs"></div>
-<script src="/res/js/v2ray/accounts.js?v=1.1.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.2.0"></script>
 
 </body>
 </html>
