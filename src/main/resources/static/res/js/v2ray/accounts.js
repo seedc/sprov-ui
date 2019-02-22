@@ -70,7 +70,8 @@ let app = new Vue({
         openAdd: function () {
             this.form = {
                 protocol: 'vmess',
-                port: randomIntRange(10000, 60000)
+                port: randomIntRange(10000, 60000),
+                tag: ''
             };
             this.vmess = {
                 id: randomUUID(),
@@ -96,7 +97,8 @@ let app = new Vue({
         openEdit: function(inbound, client) {
             this.form = {
                 protocol: inbound.protocol,
-                port: inbound.port
+                port: inbound.port,
+                tag: inbound.tag ? inbound.tag : ''
             };
             if (inbound.protocol === 'vmess') {
                 this.vmess = {
@@ -165,6 +167,7 @@ let app = new Vue({
             return {
                 port: form.port,
                 protocol: form.protocol,
+                tag: form.tag,
                 settings: JSON.stringify(settings),
                 streamSettings: JSON.stringify(streamSettings)
             };

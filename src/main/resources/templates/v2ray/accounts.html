@@ -42,7 +42,7 @@
                 <el-button type="danger" size="mini" @click="stop">关闭</el-button>
             </div>
             <div v-for="inbound in inbounds" style="margin-top: 10px;">
-                <!-- vmess协议 -->
+                <!-- vmess -->
                 <el-card v-if="inbound.protocol === 'vmess'"
                          v-for="(client, index) in inbound.settings.clients">
                     <div slot="header">
@@ -74,62 +74,73 @@
                             传输协议：<el-tag>{{ inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp' }}</el-tag>
                         </el-col>
                     </el-row>
+                    <el-row v-if="!isEmpty(inbound.tag)">
+                        <el-col :sm="12">
+                            tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                        </el-col>
+                    </el-row>
                 </el-card>
-                <el-card v-if="inbound.protocol === 'shadowsocks'">
+                <el-card v-if="inbound.protocol === 'shadowsocks'
+                                || inbound.protocol === 'dokodemo-door'">
                     <div slot="header">
                         <el-tag type="primary">{{ inbound.protocol }}</el-tag>
                         <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
                         <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
                     </div>
-                    <el-row>
-                        <el-col :sm="12">
-                            IP：<el-tag>{{ ip }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            端口：<el-tag>{{ inbound.port }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col :sm="12">
-                            加密：<el-tag>{{ inbound.settings.method }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            密码：<el-tag>{{ inbound.settings.password }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col>
-                            网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
-                        </el-col>
-                    </el-row>
-                </el-card>
-                <el-card v-if="inbound.protocol === 'dokodemo-door'">
-                    <div slot="header">
-                        <el-tag type="primary">{{ inbound.protocol }}</el-tag>
-                        <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
-                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                    <!-- shadowsocks -->
+                    <div v-if="inbound.protocol === 'shadowsocks'">
+                        <el-row>
+                            <el-col :sm="12">
+                                IP：<el-tag>{{ ip }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                端口：<el-tag>{{ inbound.port }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                加密：<el-tag>{{ inbound.settings.method }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                密码：<el-tag>{{ inbound.settings.password }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                            </el-col>
+                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                            </el-col>
+                        </el-row>
                     </div>
-                    <el-row>
-                        <el-col :sm="12">
-                            IP：<el-tag>{{ ip }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            端口：<el-tag>{{ inbound.port }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col :sm="12">
-                            转发的地址：<el-tag>{{ inbound.settings.address }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            转发的端口：<el-tag>{{ inbound.settings.port }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col>
-                            转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
-                        </el-col>
-                    </el-row>
+                    <!-- dokodemo-door -->
+                    <div v-if="inbound.protocol === 'dokodemo-door'">
+                        <el-row>
+                            <el-col :sm="12">
+                                IP：<el-tag>{{ ip }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                端口：<el-tag>{{ inbound.port }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                转发的地址：<el-tag>{{ inbound.settings.address }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                转发的端口：<el-tag>{{ inbound.settings.port }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                            </el-col>
+                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </div>
                 </el-card>
             </div>
         </el-card>
@@ -242,6 +253,12 @@
                 </el-select>
             </el-form-item>
         </el-form>
+        <!-- 其它 -->
+        <el-form size="small" label-position="top">
+            <el-form-item label="tag标识（可选，若不为空则必须唯一，否则会无法连接）">
+                <el-input v-model.trim="form.tag"></el-input>
+            </el-form-item>
+        </el-form>
         <el-form size="small" label-position="top">
             <el-form-item>
                 <el-button v-if="inDL.mode === 'add'" type="primary" size="small" @click="addInbound(form)" :loading="btnLoad">添加</el-button>
@@ -252,7 +269,7 @@
 </el-container>
 
 <div th:replace="common/common_js :: commonJs"></div>
-<script src="/res/js/v2ray/accounts.js?v=2.2.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.3.0"></script>
 
 </body>
 </html>

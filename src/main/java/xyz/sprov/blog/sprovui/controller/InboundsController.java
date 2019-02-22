@@ -24,9 +24,9 @@ public class InboundsController {
         JSONObject inbound = new JSONObject();
         inbound.put("port", port);
         inbound.put("protocol", protocol);
-        if (!StringUtils.isBlank(tag)) {
-            inbound.put("tag", tag);
-        }
+        inbound.put("tag", tag);
+//        if (!StringUtils.isBlank(tag)) {
+//        }
         try {
             inbound.put("settings", JSONObject.parseObject(settings));
         } catch (Exception e) {
