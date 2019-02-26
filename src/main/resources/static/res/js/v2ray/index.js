@@ -25,7 +25,7 @@ let app = new Vue({
     data: {
         defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
         tableData: tableData,
-        freshInterval: 1.5
+        freshInterval: 1
     },
     methods: {
         menuSelect: function (index) { console.log(index); location.href = index; },

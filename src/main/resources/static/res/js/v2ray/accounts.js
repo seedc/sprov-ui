@@ -1,3 +1,35 @@
+const defaultInbound = {
+    settings: {},
+    streamSettings: {
+        network: 'tcp',
+        tcpSettings: {
+            header: {
+                type: 'none'
+            }
+        },
+        kcpSettings: {
+            uplinkCapacity: 5,
+            downlinkCapacity: 20,
+            header: {
+                type: 'none'
+            }
+        },
+        wsSettings: {
+            path: '/',
+            headers: {}
+        },
+        httpSettings: {
+            host: [],
+            path: '/'
+        }
+    },
+    tag: ''
+};
+
+const defaultVmessSettings = {
+    clients: []
+};
+
 let formRules = {
     port: [
         { type: 'integer', min: 1, max: 65535, required: true, message: '范围1-65535且为整数', trigger: 'blur' },
@@ -18,12 +50,29 @@ let ssRules = {
 
 let dokoRules = {
     address: [
-        { len: 3, required: true, message: '请输入一个IP或域名', trigger: 'blur' }
+        { required: true, message: '请输入一个IP或域名', trigger: 'blur' }
     ],
     port: [
         { type: 'integer', min: 1, max: 65535, required: true, message: '范围1-65535且为整数', trigger: 'blur' },
     ]
 };
+
+let kcpRules = {
+    uplinkCapacity: [
+        { type: 'integer', min: 0, required: true, message: '请输入一个非负整数', trigger: 'blur' }
+    ],
+    downlinkCapacity: [
+        { type: 'integer', min: 0, required: true, message: '请输入一个非负整数', trigger: 'blur' }
+    ]
+};
+
+let wsRules = {
+    path: [
+        { required: true, message: '必须填入一个路径', trigger: 'blur' }
+    ]
+};
+
+const forms = ['inForm', 'vmessForm', 'ssForm', 'dokoForm', 'kcpForm', 'wsForm'];
 
 let app = new Vue({
     el: '#app',
@@ -38,11 +87,15 @@ let app = new Vue({
         vmessRules: vmessRules,
         ssRules: ssRules,
         dokoRules: dokoRules,
+        kcpRules: kcpRules,
+        wsRules: wsRules,
         form: {},
         vmess: {},
         ss: {},
         doko: {},
-        stream: {}
+        stream: {},
+        kcp: {},
+        ws: {}
     },
     methods: {
         menuSelect: function (index) { location.href = index; },
@@ -91,6 +144,17 @@ let app = new Vue({
             this.stream = {
                 network: 'tcp'
             };
+            this.kcp = {
+                type: 'none',
+                uplinkCapacity: 5,
+                downlinkCapacity: 20
+            };
+            this.ws = {
+                path: '/',
+                headers: [
+                    { name: '', value: '' }
+                ]
+            };
             this.inDL.mode = 'add';
             this.inDL.visible = true;
         },
@@ -98,7 +162,7 @@ let app = new Vue({
             this.form = {
                 protocol: inbound.protocol,
                 port: inbound.port,
-                tag: inbound.tag ? inbound.tag : ''
+                tag: inbound.tag
             };
             if (inbound.protocol === 'vmess') {
                 this.vmess = {
@@ -106,8 +170,27 @@ let app = new Vue({
                     alterId: client.alterId,
                     security: client.security ? client.security : 'auto'
                 };
+                let streamSettings = inbound.streamSettings;
                 this.stream = {
-                    network: inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp'
+                    network: streamSettings.network
+                };
+                let kcpSettings = streamSettings.kcpSettings;
+                this.kcp = {
+                    type: kcpSettings.header.type,
+                    uplinkCapacity: kcpSettings.uplinkCapacity,
+                    downlinkCapacity: kcpSettings.downlinkCapacity
+                };
+                let wsSettings = streamSettings.wsSettings;
+                let headers = [];
+                for (let name in wsSettings.headers) {
+                    headers.push({ name: name, value: wsSettings.headers[name] });
+                }
+                if (headers.length === 0) {
+                    headers.push({ name: '', value: '' });
+                }
+                this.ws = {
+                    path: wsSettings.path,
+                    headers: headers
                 };
             } else if (inbound.protocol === 'shadowsocks') {
                 this.ss = {
@@ -139,6 +222,7 @@ let app = new Vue({
             if (form.protocol === 'vmess') {
                 let vmess = this.vmess;
                 let stream = this.stream;
+                let kcp = this.kcp;
                 settings = {
                     clients: [{
                         id: vmess.id,
@@ -149,6 +233,28 @@ let app = new Vue({
                 streamSettings = {
                     network: stream.network
                 };
+                if (stream.network === 'kcp') {
+                    streamSettings.kcpSettings = {
+                        uplinkCapacity: kcp.uplinkCapacity,
+                        downlinkCapacity: kcp.downlinkCapacity,
+                        header: {
+                            type: kcp.type
+                        }
+                    }
+                } else if (stream.network === 'ws') {
+                    let ws = this.ws;
+                    let headers = {};
+                    for (let i in ws.headers) {
+                        let header = ws.headers[i];
+                        if (!isEmpty(header.name)) {
+                            headers[header.name] = header.value;
+                        }
+                    }
+                    streamSettings.wsSettings = {
+                        path: ws.path,
+                        headers: headers
+                    };
+                }
             } else if (form.protocol === 'shadowsocks') {
                 let ss = this.ss;
                 settings = {
@@ -173,24 +279,25 @@ let app = new Vue({
             };
         },
         clearValidates: function() {
-            if (this.$refs['inForm']) {
-                this.$refs['inForm'].clearValidate();
-            }
-            if (this.$refs['vmessForm']) {
-                this.$refs['vmessForm'].clearValidate();
-            }
-            if (this.$refs['ssForm']) {
-                this.$refs['ssForm'].clearValidate();
-            }
-            if (this.$refs['dokoForm']) {
-                this.$refs['dokoForm'].clearValidate();
+            for (let i in forms) {
+                if (this.$refs[forms[i]]) {
+                    this.$refs[forms[i]].clearValidate();
+                }
             }
         },
         validateForms: function(form, callback) {
             this.$refs['inForm'].validate(valid => {
                 if (valid) {
                     if (form.protocol === 'vmess') {
-                        this.$refs['vmessForm'].validate(callback);
+                        this.$refs['vmessForm'].validate(valid => {
+                            if (valid && this.$refs['kcpForm']) {
+                                this.$refs['kcpForm'].validate(callback);
+                            } else if (valid && this.$refs['wsForm']) {
+                                this.$refs['wsForm'].validate(callback);
+                            } else {
+                                execute(callback, valid);
+                            }
+                        });
                     } else if (form.protocol === 'shadowsocks') {
                         this.$refs['ssForm'].validate(callback);
                     } else if (form.protocol === 'dokodemo-door') {
@@ -265,11 +372,43 @@ let app = new Vue({
                     });
                 }
             });
+        },
+        setInbounds: function (inbounds) {
+            for (let i in inbounds) {
+                this.setDefaultInbound(inbounds[i]);
+            }
+            this.inbounds = inbounds;
+        },
+        setDefaultInbound: function (inbound) {
+            this.setDefaultIfNone(inbound, defaultInbound);
+            switch (inbound.protocol) {
+                case 'vmess': this.setDefaultIfNone(inbound.settings, defaultVmessSettings); break;
+            }
+        },
+        setDefaultIfNone: function (obj, defaultObj) {
+            for (let i in defaultObj) {
+                if (obj[i] === undefined) {
+                    obj[i] = defaultObj[i];
+                } else if (typeof obj[i] === 'object') {
+                    this.setDefaultIfNone(obj[i], defaultObj[i]);
+                }
+            }
+        },
+        showHeaders: function (obj) {
+            let html = '<div>';
+            for (let i in obj) {
+                html += '<p>' + i + " : " + obj[i] + '</p>';
+            }
+            html += '</div>';
+            this.$alert(html, '', {
+                center: true,
+                dangerouslyUseHTMLString: true
+            });
         }
     },
     watch: {
         'config': function (config) {
-            this.inbounds = config.inbounds;
+            this.setInbounds(config.inbounds);
         }
     },
     mounted: function () {

@@ -71,7 +71,31 @@
                             加密：<el-tag>{{ client.security ? client.security : 'auto' }}</el-tag>
                         </el-col>
                         <el-col :sm="12">
-                            传输协议：<el-tag>{{ inbound.streamSettings && inbound.streamSettings.network ? inbound.streamSettings.network : 'tcp' }}</el-tag>
+                            传输协议：<el-tag>{{ inbound.streamSettings.network }}</el-tag>
+                        </el-col>
+                    </el-row>
+                    <!-- kcp -->
+                    <el-row v-if="inbound.streamSettings.network === 'kcp'">
+                        <el-col :sm="12">
+                            伪装类型：<el-tag>{{ inbound.streamSettings.kcpSettings.header.type }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            上行/下行链路容量：
+                            <el-tag>
+                                {{ inbound.streamSettings.kcpSettings.uplinkCapacity }} /
+                                {{ inbound.streamSettings.kcpSettings.downlinkCapacity }}
+                            </el-tag>
+                        </el-col>
+                    </el-row>
+                    <!-- ws -->
+                    <el-row v-if="inbound.streamSettings.network === 'ws'">
+                        <el-col :sm="12">
+                            路径：<el-tag>{{ inbound.streamSettings.wsSettings.path }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            HTTP 头：
+                            <span v-if="JSON.stringify(inbound.streamSettings.wsSettings.headers) === '{}'">无</span>
+                            <el-button v-else type="text" @click="showHeaders(inbound.streamSettings.wsSettings.headers)">查看</el-button>
                         </el-col>
                     </el-row>
                     <el-row v-if="!isEmpty(inbound.tag)">
@@ -150,6 +174,7 @@
     <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'"
                :visible.sync="inDL.visible"
                width="300px" @close="clearValidates">
+        <!-- 基本 -->
         <el-form :model="form" :rules="formRules"
                  ref="inForm" size="small"
                  label-position="top">
@@ -228,13 +253,19 @@
                  ref="dokoForm" :rules="dokoRules"
                  :model="doko" size="small"
                  label-position="top">
-            <el-form-item label="待转发的IP或域名" prop="address">
+            <el-form-item prop="address">
+                <template slot="label">
+                    目标地址
+                    <el-tooltip content="填写一个IP或域名">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
                 <el-input v-model.trim="doko.address"></el-input>
             </el-form-item>
-            <el-form-item label="转发的端口" prop="port">
+            <el-form-item label="目标端口" prop="port">
                 <el-input type="number" v-model.number="doko.port"></el-input>
             </el-form-item>
-            <el-form-item label="转发底层协议">
+            <el-form-item label="底层协议">
                 <el-select v-model="doko.network">
                     <el-option label="tcp + udp" value="tcp,udp"></el-option>
                     <el-option value="tcp"></el-option>
@@ -246,16 +277,112 @@
         <el-form v-if="form.protocol === 'vmess'"
                  size="small"
                  label-position="top">
-            <el-form-item label="底层传输">
+            <el-form-item>
+                <template slot="label">
+                    底层传输
+                    <el-tooltip content="若ip被tcp阻断，可使用kcp">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
                 <el-select v-model="stream.network">
-                    <el-option label="tcp（推荐）" value="tcp"></el-option>
+                    <el-option label="tcp" value="tcp"></el-option>
                     <el-option label="kcp（底层使用udp协议）" value="kcp"></el-option>
+                    <el-option label="ws（WebSocket）" value="ws"></el-option>
                 </el-select>
+            </el-form-item>
+        </el-form>
+        <!-- kcp Settings -->
+        <el-form v-if="form.protocol === 'vmess' && stream.network === 'kcp'"
+                 ref="kcpForm" :rules="kcpRules"
+                 :model="kcp" size="small"
+                 label-position="top">
+            <el-form-item>
+                <template slot="label">
+                    伪装
+                    <el-tooltip content="伪装需谨慎使用，效果可能变好也可能变差">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-select v-model="kcp.type">
+                    <el-option label="none（不伪装）" value="none"></el-option>
+                    <el-option label="srtp（伪装视频通话数据）" value="srtp"></el-option>
+                    <el-option label="utp（伪装BT下载）" value="utp"></el-option>
+                    <el-option label="wechat-video（伪装微信视频）" value="wechat-video"></el-option>
+                    <el-option label="dtls（伪装DTLS 1.2数据包）" value="dtls"></el-option>
+                    <el-option label="wireguard（伪装WireGuard数据包）" value="wireguard"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item prop="uplinkCapacity">
+                <template slot="label">
+                    上行链接容量（MB/s）
+                    <el-tooltip content="决定服务器最大发送数据的速度，推荐设为实际的带宽，当速度不够时，可以逐渐增加，直到带宽的两倍左右">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input type="number" v-model.number="kcp.uplinkCapacity"></el-input>
+            </el-form-item>
+            <el-form-item prop="downlinkCapacity">
+                <template slot="label">
+                    下行链接容量（MB/s）
+                    <el-tooltip content="决定服务器最大接收数据的速度，推荐设置为一个较大的值，比如100">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input type="number" v-model.number="kcp.downlinkCapacity"></el-input>
+            </el-form-item>
+        </el-form>
+        <!-- ws Settings -->
+        <el-form v-if="form.protocol === 'vmess' && stream.network === 'ws'"
+                 ref="wsForm" :rules="wsRules"
+                 :model="ws" size="small"
+                 label-position="top">
+            <el-form-item prop="path">
+                <template slot="label">
+                    路径
+                    <el-tooltip content="WebSocket 所使用的 HTTP 协议路径">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="ws.path"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    HTTP 头
+                    <el-tooltip content="自定义 HTTP 头，可添加多个键值对">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-row v-for="(header, index) in ws.headers" type="flex" justify="center">
+                    <el-col :span="2">
+                        键
+                    </el-col>
+                    <el-col :span="6">
+                        <el-input v-model.trim="header.name"></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        值
+                    </el-col>
+                    <el-col :span="12">
+                        <el-input v-model.trim="header.value"></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-button v-if="index > 0 && index === ws.headers.length - 1" type="text" size="mini" icon="el-icon-minus" @click="ws.headers.splice(index, 1)"></el-button>
+                    </el-col>
+                </el-row>
+                <el-row>
+                    <el-button type="success" size="mini" icon="el-icon-plus" @click="ws.headers.push({ name: '', value: '' })"></el-button>
+                </el-row>
             </el-form-item>
         </el-form>
         <!-- 其它 -->
         <el-form size="small" label-position="top">
-            <el-form-item label="tag标识（可选，若不为空则必须唯一，否则会无法连接）">
+            <el-form-item>
+                <template slot="label">
+                    tag标识（可选）
+                    <el-tooltip content="若不为空则必须唯一，否则会无法连接">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
                 <el-input v-model.trim="form.tag"></el-input>
             </el-form-item>
         </el-form>
@@ -269,7 +396,7 @@
 </el-container>
 
 <div th:replace="common/common_js :: commonJs"></div>
-<script src="/res/js/v2ray/accounts.js?v=2.3.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.4.0"></script>
 
 </body>
 </html>
