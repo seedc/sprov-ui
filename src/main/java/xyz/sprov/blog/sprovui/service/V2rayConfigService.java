@@ -110,6 +110,11 @@ public class V2rayConfigService {
             throw new V2rayConfigException("协议填写错误");
         }
         JSONObject config = getConfig();
+        if (Protocol.MT_PROTO.getValue().equals(protocol)) {
+            String tag = "tg-in-" + port;
+            inbound.put("tag", tag);
+            addMTOutboundAndRoute(config, tag);
+        }
         JSONArray inbounds = getInbounds(config);
         for (Object inb : inbounds) {
             JSONObject in = (JSONObject) inb;
@@ -119,6 +124,64 @@ public class V2rayConfigService {
         }
         inbounds.add(inbound);
         writeConfig(config);
+    }
+
+    private void addMTOutboundAndRoute(JSONObject config, String tag) {
+        addMTOutbound(config);
+        addOrDelMTRoute(config, tag, "add");
+    }
+
+    private void addMTOutbound(JSONObject config) {
+        JSONArray outbounds = config.getJSONArray("outbounds");
+        if (outbounds == null) {
+            outbounds = JSONArray.parseArray("[{'protocol': 'freedom','settings': {}}]");
+            config.put("outbounds", outbounds);
+        }
+        for (Object obj : outbounds) {
+            JSONObject outbound = (JSONObject) obj;
+            if ("tg-out".equals(outbound.getString("tag"))) {
+                return;
+            }
+        }
+        JSONObject mtOutbound = JSONObject.parseObject("{'tag': 'tg-out', 'protocol': 'mtproto', 'settings': {}}");
+        outbounds.add(mtOutbound);
+    }
+
+    private void addOrDelMTRoute(JSONObject config, String tag, String action) {
+        JSONObject routing = config.getJSONObject("routing");
+        if (routing == null) {
+            routing = JSONObject.parseObject("{'rules': []}");
+            config.put("routing", routing);
+        }
+        JSONArray rules = routing.getJSONArray("rules");
+        JSONObject tgRule = null;
+        for (Object obj : rules) {
+            JSONObject rule = (JSONObject) obj;
+            if ("tg-out".equals(rule.getString("outboundTag"))) {
+                tgRule = rule;
+                break;
+            }
+        }
+        if (tgRule == null) {
+            tgRule = JSONObject.parseObject("{'type': 'field', 'inboundTag': [], 'outboundTag': 'tg-out'}");
+            rules.add(tgRule);
+        }
+        JSONArray inboundTag = tgRule.getJSONArray("inboundTag");
+        if (inboundTag == null) {
+            inboundTag = JSONArray.parseArray("[]");
+            tgRule.put("inboundTag", inboundTag);
+        }
+        if ("add".equals(action)) {
+            inboundTag.add(tag);
+        } else if ("del".equals(action)) {
+            inboundTag.remove(tag);
+            if (inboundTag.size() == 0) {
+                rules.removeIf(obj -> {
+                    JSONObject rule = (JSONObject) obj;
+                    return "tg-out".equals(rule.getString("outboundTag"));
+                });
+            }
+        }
     }
 
     /**
@@ -147,9 +210,13 @@ public class V2rayConfigService {
     public void delInbound(int port) throws IOException {
         JSONObject config = getConfig();
         JSONArray inbounds = getInbounds(config);
-        boolean removed = inbounds.removeIf(inb -> {
-            JSONObject in = (JSONObject) inb;
-            return in.getIntValue("port") == port;
+        boolean removed = inbounds.removeIf(obj -> {
+            JSONObject in = (JSONObject) obj;
+            if (in.getIntValue("port") == port) {
+                addOrDelMTRoute(config, in.getString("tag"), "del");
+                return true;
+            }
+            return false;
         });
         if (removed) {
             writeConfig(config);

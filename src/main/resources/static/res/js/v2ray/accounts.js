@@ -83,6 +83,7 @@ let app = new Vue({
         config: {},
         inbounds: [],
         inDL: { visible: false, mode: 'add' },
+        qrCodeDL: { visible: false, qrcode: null },
         formRules: formRules,
         vmessRules: vmessRules,
         ssRules: ssRules,
@@ -93,6 +94,7 @@ let app = new Vue({
         vmess: {},
         ss: {},
         doko: {},
+        mt: {},
         stream: {},
         kcp: {},
         ws: {}
@@ -129,7 +131,7 @@ let app = new Vue({
             this.vmess = {
                 id: randomUUID(),
                 alterId: 64,
-                security: 'auto'
+                // security: 'auto'
             };
             this.ss = {
                 method: 'aes-256-gcm',
@@ -140,6 +142,9 @@ let app = new Vue({
                 address: '',
                 port: '',
                 network: 'tcp,udp'
+            };
+            this.mt = {
+                secret: randomMTSecret()
             };
             this.stream = {
                 network: 'tcp'
@@ -168,7 +173,7 @@ let app = new Vue({
                 this.vmess = {
                     id: client.id,
                     alterId: client.alterId,
-                    security: client.security ? client.security : 'auto'
+                    // security: client.security ? client.security : 'auto'
                 };
                 let streamSettings = inbound.streamSettings;
                 this.stream = {
@@ -204,6 +209,10 @@ let app = new Vue({
                     port: inbound.settings.port,
                     network: inbound.settings.network ? inbound.settings.network : 'tcp'
                 };
+            } else if (inbound.protocol === 'mtproto') {
+                this.mt = {
+                    secret: inbound.settings.users[0].secret
+                };
             }
             this.inDL.mode = 'edit';
             this.inDL.visible = true;
@@ -227,7 +236,7 @@ let app = new Vue({
                     clients: [{
                         id: vmess.id,
                         alterId: vmess.alterId,
-                        security: vmess.security
+                        // security: vmess.security
                     }]
                 };
                 streamSettings = {
@@ -269,6 +278,13 @@ let app = new Vue({
                     port: doko.port,
                     network: doko.network
                 };
+            } else if (form.protocol === 'mtproto') {
+                let mt = this.mt;
+                settings = {
+                    users: [{
+                        secret: mt.secret
+                    }]
+                };
             }
             return {
                 port: form.port,
@@ -302,6 +318,8 @@ let app = new Vue({
                         this.$refs['ssForm'].validate(callback);
                     } else if (form.protocol === 'dokodemo-door') {
                         this.$refs['dokoForm'].validate(callback);
+                    } else {
+                        execute(callback, valid);
                     }
                 } else {
                     execute(callback, valid);
@@ -404,6 +422,92 @@ let app = new Vue({
                 center: true,
                 dangerouslyUseHTMLString: true
             });
+        },
+        showQrCode: function(str) {
+            this.qrCodeDL.visible = true;
+            this.$nextTick(() => {
+                // jquery('#qrcode').qrcode(str);
+                // if (this.qrCodeDL.qrcode === null) {
+                //     this.qrCodeDL.qrcode = new QRCode(document.getElementById('qrCode'), {
+                //         text: str,
+                //         correctLevel : QRCode.CorrectLevel.H
+                //     });
+                // } else {
+                //     this.qrCodeDL.qrcode.clear();
+                //     this.qrCodeDL.qrcode.makeCode(str);
+                // }
+                if (this.qrCodeDL.qrcode === null) {
+                    this.qrCodeDL.qrcode = new QRious({
+                        element: document.querySelector('#qrCode'),
+                        size: 260,
+                        value: str
+                    });
+                } else {
+                    this.qrCodeDL.qrcode.value = str;
+                }
+            });
+        },
+        vmessLink: function (inbound, client) {
+            let network = inbound.streamSettings.network;
+            let type = 'none';
+            let host = '';
+            let path = '';
+            if (network === 'tcp') {
+                let tcpSettings = inbound.streamSettings.tcpSettings;
+                let header = tcpSettings.header;
+                type = header.type;
+                if (header.request) {
+                    let request = header.request;
+                    path = this.arrToString(request.path);
+                    if (header.headers) {
+                        host = this.arrToString(propIgnoreCase(header.headers, 'host'));
+                    }
+                }
+            } else if (network === 'kcp') {
+                let kcpSettings = inbound.streamSettings.kcpSettings;
+                let header = kcpSettings.header;
+                type = header.type;
+            } else if (network === 'ws') {
+                let wsSettings = inbound.streamSettings.wsSettings;
+                path = wsSettings.path;
+                host = propIgnoreCase(wsSettings.headers, 'host') ? propIgnoreCase(wsSettings.headers, 'host') : '';
+            }
+            let obj = {
+                v: '2',
+                ps: '',
+                add: this.ip,
+                port: inbound.port,
+                id: client.id,
+                aid: client.alterId,
+                net: network,
+                type: type,
+                host: host,
+                path: path,
+                tls: inbound.streamSettings.security === 'tls' ? 'tls' : ''
+            };
+            return 'vmess://' + Base64.encode(JSON.stringify(obj));
+        },
+        ssLink: function(inbound) {
+            let settings = inbound.settings;
+            return 'ss://' + safeBase64(settings.method + ':' + settings.password + '@' + this.ip + ':' + inbound.port);
+        },
+        mtLink: function(inbound) {
+            let settings = inbound.settings;
+            let user = settings.users[0];
+            return 'https://t.me/proxy?server=' + this.ip + '&port=' + inbound.port + '&secret=' + user.secret;
+        },
+        arrToString: function (arr, split) {
+            if (isEmpty(split)) {
+                split = ',';
+            }
+            let str = '';
+            if (arr) {
+                for (let i in arr) {
+                    str += arr[i] + split;
+                }
+                str = str.substring(0, str.length - split);
+            }
+            return str;
         }
     },
     watch: {

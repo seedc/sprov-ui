@@ -200,11 +200,11 @@ let seq = [
     'h', 'i', 'j', 'k', 'l', 'm', 'n',
     'o', 'p', 'q', 'r', 's', 't',
     'u', 'v', 'w', 'x', 'y', 'z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G',
     'H', 'I', 'J', 'K', 'L', 'M', 'N',
     'O', 'P', 'Q', 'R', 'S', 'T',
-    'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+    'U', 'V', 'W', 'X', 'Y', 'Z'
 ];
 
 /**
@@ -232,6 +232,27 @@ window.randomSeq = count => {
     return str;
 };
 
+window.randomLowerAndNum = count => {
+    let str = '';
+    for (let i = 0; i < count; ++i) {
+        str += seq[randomInt(36)];
+    }
+    return str;
+};
+
+window.randomMTSecret = () => {
+    let str = '';
+    for (let i = 0; i < 32; ++i) {
+        let index = randomInt(16);
+        if (index <= 9) {
+            str += index;
+        } else {
+            str += seq[index - 10];
+        }
+    }
+    return str;
+};
+
 window.randomUUID = () => {
     let d = new Date().getTime();
     let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -240,4 +261,17 @@ window.randomUUID = () => {
         return (c === 'x' ? r : (r & 0x7 | 0x8)).toString(16);
     });
     return uuid;
+};
+
+window.propIgnoreCase = (obj, prop) => {
+    for (let name in obj) {
+        if (name.toLowerCase() === prop.toLowerCase()) {
+            return obj[name];
+        }
+    }
+    return undefined;
+};
+
+window.safeBase64 = str => {
+    return Base64.encode(str).replace('+', '-').replace('/', '_');
 };

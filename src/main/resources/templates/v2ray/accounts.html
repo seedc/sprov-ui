@@ -52,6 +52,14 @@
                     </div>
                     <el-row>
                         <el-col :sm="12">
+                            <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="vmessLink(inbound, client)">复制vmess链接</el-button>
+                        </el-col>
+                        <el-col :sm="12">
+                            <el-button type="primary" size="mini" @click="showQrCode(vmessLink(inbound, client))">二维码</el-button>
+                        </el-col>
+                    </el-row>
+                    <el-row>
+                        <el-col :sm="12">
                             IP：<el-tag>{{ ip }}</el-tag>
                         </el-col>
                         <el-col :sm="12">
@@ -68,7 +76,8 @@
                     </el-row>
                     <el-row>
                         <el-col :sm="12">
-                            加密：<el-tag>{{ client.security ? client.security : 'auto' }}</el-tag>
+                            <!--加密：<el-tag>{{ client.security ? client.security : 'auto' }}</el-tag>-->
+                            加密：<el-tag>auto</el-tag>
                         </el-col>
                         <el-col :sm="12">
                             传输协议：<el-tag>{{ inbound.streamSettings.network }}</el-tag>
@@ -105,7 +114,8 @@
                     </el-row>
                 </el-card>
                 <el-card v-if="inbound.protocol === 'shadowsocks'
-                                || inbound.protocol === 'dokodemo-door'">
+                                || inbound.protocol === 'dokodemo-door'
+                                || inbound.protocol === 'mtproto'">
                     <div slot="header">
                         <el-tag type="primary">{{ inbound.protocol }}</el-tag>
                         <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
@@ -113,6 +123,14 @@
                     </div>
                     <!-- shadowsocks -->
                     <div v-if="inbound.protocol === 'shadowsocks'">
+                        <el-row>
+                            <el-col :sm="12">
+                                <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="ssLink(inbound)">复制ss链接</el-button>
+                            </el-col>
+                            <el-col :sm="12">
+                                <el-button type="primary" size="mini" @click="showQrCode(ssLink(inbound))">二维码</el-button>
+                            </el-col>
+                        </el-row>
                         <el-row>
                             <el-col :sm="12">
                                 IP：<el-tag>{{ ip }}</el-tag>
@@ -165,6 +183,34 @@
                             </el-col>
                         </el-row>
                     </div>
+                    <!-- mtproto -->
+                    <div v-if="inbound.protocol === 'mtproto'">
+                        <el-row>
+                            <el-col :sm="12">
+                                <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="mtLink(inbound)">复制链接</el-button>
+                            </el-col>
+                            <el-col :sm="12">
+                                <el-button type="primary" size="mini" @click="window.open(mtLink(inbound))">直接打开</el-button>
+                                <!--<a :href="mtLink(inbound)" target="_blank">直接打开</a>-->
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                IP：<el-tag>{{ ip }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                端口：<el-tag>{{ inbound.port }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                密钥：<el-tag>{{ inbound.settings.users[0].secret }}</el-tag>
+                            </el-col>
+                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </div>
                 </el-card>
             </div>
         </el-card>
@@ -183,6 +229,7 @@
                     <el-option label="vmess" value="vmess"></el-option>
                     <el-option label="shadowsocks" value="shadowsocks"></el-option>
                     <el-option label="dokodemo-door（端口转发）" value="dokodemo-door"></el-option>
+                    <el-option label="mtproto（telegram代理）" value="mtproto"></el-option>
                 </el-select>
             </el-form-item>
             <el-form-item prop="port">
@@ -208,14 +255,14 @@
             <el-form-item label="额外id（alterId）" prop="alterId">
                 <el-input type="number" v-model.number="vmess.alterId"></el-input>
             </el-form-item>
-            <el-form-item label="加密">
-                <el-select v-model="vmess.security">
-                    <el-option label="auto（推荐）" value="auto"></el-option>
-                    <el-option label="aes-128-gcm" value="aes-128-gcm"></el-option>
-                    <el-option label="chacha20-poly1305" value="chacha20-poly1305"></el-option>
-                    <el-option label="none（不推荐）" value="none"></el-option>
-                </el-select>
-            </el-form-item>
+            <!--<el-form-item label="加密">-->
+                <!--<el-select v-model="vmess.security">-->
+                    <!--<el-option label="auto（推荐）" value="auto"></el-option>-->
+                    <!--<el-option label="aes-128-gcm" value="aes-128-gcm"></el-option>-->
+                    <!--<el-option label="chacha20-poly1305" value="chacha20-poly1305"></el-option>-->
+                    <!--<el-option label="none（不推荐）" value="none"></el-option>-->
+                <!--</el-select>-->
+            <!--</el-form-item>-->
         </el-form>
         <!-- shadowsocks 协议 -->
         <el-form v-if="form.protocol === 'shadowsocks'"
@@ -271,6 +318,18 @@
                     <el-option value="tcp"></el-option>
                     <el-option value="udp"></el-option>
                 </el-select>
+            </el-form-item>
+        </el-form>
+        <!-- mtproto 协议 -->
+        <el-form v-if="form.protocol === 'mtproto'"
+                 size="small"
+                 label-position="top">
+            <el-form-item>
+                <template slot="label">
+                    密钥
+                    <el-button type="text" size="mini" @click="mt.secret = randomMTSecret()">重新生成</el-button>
+                </template>
+                <el-input :disabled="true" v-model="mt.secret"></el-input>
             </el-form-item>
         </el-form>
         <!-- streamSettings -->
@@ -375,7 +434,7 @@
             </el-form-item>
         </el-form>
         <!-- 其它 -->
-        <el-form size="small" label-position="top">
+        <el-form v-if="form.protocol !== 'mtproto'" size="small" label-position="top">
             <el-form-item>
                 <template slot="label">
                     tag标识（可选）
@@ -393,10 +452,14 @@
             </el-form-item>
         </el-form>
     </el-dialog>
+
+    <el-dialog title="二维码" :visible.sync="qrCodeDL.visible" width="300px">
+        <canvas id="qrCode" style="width: 100%; height: 100%;"></canvas>
+    </el-dialog>
 </el-container>
 
 <div th:replace="common/common_js :: commonJs"></div>
-<script src="/res/js/v2ray/accounts.js?v=2.4.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.5.0"></script>
 
 </body>
 </html>

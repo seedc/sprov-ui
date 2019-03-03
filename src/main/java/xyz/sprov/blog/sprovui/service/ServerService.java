@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 //@Service
 public class ServerService {
 
+    private long lastAccess = System.currentTimeMillis();
+
 //    @Autowired
     private V2rayService v2rayService = Context.v2rayService;
 
@@ -42,6 +44,7 @@ public class ServerService {
      * 获取系统所有状态
      */
     public Collection<Status> statuses(HttpServletRequest request) throws V2rayException {
+        lastAccess = System.currentTimeMillis();
         List<Status> statuses = new ArrayList<>(9);
         statuses.add(v2rayStatus());
         statuses.add(uptime());
@@ -351,6 +354,10 @@ public class ServerService {
 
         @Override
         public void run() {
+            long curTime = System.currentTimeMillis();
+            if (curTime - lastAccess > 60000) {
+                return;
+            }
             try {
                 v2rayStatus();
             } catch (Exception e) {
