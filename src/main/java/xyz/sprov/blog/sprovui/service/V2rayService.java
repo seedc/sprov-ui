@@ -61,10 +61,10 @@ public class V2rayService {
         String result = ExecUtil.execForResult("sh", "-c", "systemctl status v2ray  | grep Active | awk '{print $3}' | cut -d \"(\" -f2 | cut -d \")\" -f1");
         if (result.contains("could not be found.")) {
             return 2;
-        } else if (result.contains("dead")) {
-            return 1;
-        } else {
+        } else if (result.contains("running")) {
             return 0;
+        } else {
+            return 1;
         }
 //        result = ExecUtil.execForResult("sh", "-c", "ps -ef | grep v2ray | grep -v grep | awk '{print $2}'");
 //        if (result.length() > 0) {

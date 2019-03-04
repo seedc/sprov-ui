@@ -1,29 +1,29 @@
 package xyz.sprov.blog.sprovui.util;
 
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import spark.ModelAndView;
 import spark.Request;
 import spark.Route;
-import spark.template.thymeleaf.ThymeleafTemplateEngine;
+import spark.TemplateEngine;
+import spark.template.velocity.VelocityTemplateEngine;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SparkUtil {
 
-    private static final ClassLoaderTemplateResolver templateResolver;
-    private static final ThymeleafTemplateEngine templateEngine;
+    private static final TemplateEngine templateEngine;
 
     static {
-        templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setCharacterEncoding("UTF-8");
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        templateResolver.setPrefix("templates/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setCacheTTLMs(3600000L);
+//        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+//        templateResolver.setCharacterEncoding("UTF-8");
+//        templateResolver.setTemplateMode(TemplateMode.HTML);
+//        templateResolver.setPrefix("templates/");
+//        templateResolver.setSuffix(".html");
+//        templateResolver.setCacheTTLMs(3600000L);
+//
+//        templateEngine = new ThymeleafTemplateEngine(templateResolver);
 
-        templateEngine = new ThymeleafTemplateEngine(templateResolver);
+        templateEngine = new VelocityTemplateEngine("UTF-8");
     }
 
     private SparkUtil() {}
@@ -40,7 +40,7 @@ public class SparkUtil {
         if (model == null) {
             model = new HashMap<>();
         }
-        return templateEngine.render(new ModelAndView(model, path));
+        return templateEngine.render(new ModelAndView(model, "/templates" + path + ".html"));
     }
 
     public static Route view(String path) {

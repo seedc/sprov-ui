@@ -1,6 +1,17 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:include="common/common_head :: commonHead('sprov-ui 登录')"></head>
+<html>
+<!--<head th:include="common/common_head :: commonHead('sprov-ui 登录')"></head>-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sprov-ui 登录</title>
+    <link href="/res/css/custom.css?v=1.0.0" rel="stylesheet">
+    <link href="/res/element-ui/theme-chalk/index.css" rel="stylesheet">
+    <link href="/res/element-ui/theme-chalk/display.css" rel="stylesheet">
+    <link href="/res/icon/iconfont.css?v=1.0.0" rel="stylesheet">
+</head>
 <body>
 
 <el-container id="app" v-cloak>
@@ -38,7 +49,17 @@
     </el-main>
 </el-container>
 
-<div th:include="common/common_js :: commonJs"></div>
+<!--<div th:include="common/common_js :: commonJs"></div>-->
+<script src="/res/vue/vue.min.js"></script>
+<script src="/res/element-ui/index.js"></script>
+<script src="/res/qs/qs.min.js"></script>
+<script src="/res/axios/axios.min.js"></script>
+<script src="/res/clipboard/clipboard.min.js"></script>
+<!--<script src="/res/base64/base64.min.js"></script>-->
+<!--<script src="/res/qrcode/qrious.min.js"></script>-->
+<script src="/res/js/application.js?v=2.5.0"></script>
+<script src="/res/js/vue-init.js?v=1.0.0"></script>
+<script src="/res/js/axios-init.js?v=1.0.0"></script>
 <script>
     let app = new Vue({
         el: '#app',
