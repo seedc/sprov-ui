@@ -213,7 +213,9 @@ public class V2rayConfigService {
         boolean removed = inbounds.removeIf(obj -> {
             JSONObject in = (JSONObject) obj;
             if (in.getIntValue("port") == port) {
-                addOrDelMTRoute(config, in.getString("tag"), "del");
+                if (Protocol.MT_PROTO.getValue().equals(in.getString("protocol"))) {
+                    addOrDelMTRoute(config, in.getString("tag"), "del");
+                }
                 return true;
             }
             return false;
