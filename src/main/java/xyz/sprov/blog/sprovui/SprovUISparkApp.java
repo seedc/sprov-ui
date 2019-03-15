@@ -34,6 +34,8 @@ public class SprovUISparkApp {
         get("/", baseRoute.index());
         post("/login", baseRoute.login(), jsonTransformer);
 
+        get("/robots.txt", baseRoute.robots());
+
         path("/v2ray", () -> {
             before("", loginFilter);
             before("/*", loginFilter);
@@ -63,6 +65,15 @@ public class SprovUISparkApp {
             before("/*", loginFilter);
 
             post("/status", serverRoute.status(), jsonTransformer);
+        });
+
+        path("/sprov-ui", () -> {
+            before("", loginFilter);
+            before("/*", loginFilter);
+
+            post("/isLastVersion", sprovUIController.isLastVersion(), jsonTransformer);
+            post("/update", sprovUIController.update(), jsonTransformer);
+            post("/restart", sprovUIController.restart(), jsonTransformer);
         });
 
         awaitInitialization();

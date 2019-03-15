@@ -25,7 +25,9 @@ let app = new Vue({
     data: {
         defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
         tableData: tableData,
-        freshInterval: 1
+        freshInterval: 1,
+        lastVersion: '',
+        isLastVersion: true
     },
     methods: {
         menuSelect: function (index) { console.log(index); location.href = index; },
@@ -41,11 +43,15 @@ let app = new Vue({
                             message: data.msg,
                             type: 'warning'
                         });
+                        setTimeout('app.freshStatus()', 30 * 1000);
                     }
                 },
                 error: e => {
                     console.log(e);
-                    this.error('发生错误，状态刷新失败，30秒后重新尝试');
+                    this.message({
+                        message: '状态刷新失败，请检查网络连接，30秒后重试',
+                        type: 'error'
+                    });
                     setTimeout('app.freshStatus()', 30 * 1000);
                 }
             });
@@ -64,10 +70,86 @@ let app = new Vue({
                     }
                 }
             }
+        },
+        checkUpdate: function () {
+            post({
+                url: '/sprov-ui/isLastVersion',
+                success: data => {
+                    this.isLastVersion = data.success;
+                    this.lastVersion = data.msg;
+                }
+            });
+        },
+        restart: function () {
+            this.confirm('确定要重启吗？', '')
+                .then(() => {
+                    post({
+                        url: '/sprov-ui/restart',
+                        success: data => {
+                            if (data.success) {
+                                this.message({
+                                    message: data.msg,
+                                    type: 'success'
+                                });
+                            } else {
+                                this.message({
+                                    message: data.msg,
+                                    type: 'error'
+                                });
+                            }
+                        },
+                        error: e => {
+                            this.message({
+                                message: '网络错误，请检查网络连接',
+                                type: 'error'
+                            });
+                        }
+                    });
+                });
+        },
+        update: function () {
+            this.confirm('确定要升级面板吗？', '')
+                .then(() => {
+                    this.message({
+                        message: '请耐心等待，升级可能需要花费几分钟',
+                        type: 'warning'
+                    });
+                    const loading = this.$loading({
+                        lock: true,
+                        text: '面板升级中...',
+                        spinner: 'el-icon-loading',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
+                    post({
+                        url: '/sprov-ui/update',
+                        success: data => {
+                            if (data.success) {
+                                this.message({
+                                    message: data.msg,
+                                    type: 'success'
+                                });
+                            } else {
+                                this.message({
+                                    message: data.msg,
+                                    type: 'error'
+                                });
+                            }
+                            loading.close();
+                        },
+                        error: e => {
+                            this.message({
+                                message: '网络错误，请检查网络连接',
+                                type: 'error'
+                            });
+                            loading.close();
+                        }
+                    });
+                });
         }
     },
     mounted: function () {
         this.freshStatus();
+        this.checkUpdate();
         // this.setTableData(newTableData);
     }
 });

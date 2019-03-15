@@ -20,9 +20,9 @@ public class ServerController {
         try {
             return new Msg(true, service.statuses(request));
         } catch (V2rayException e) {
-            return new Msg(false, e.getMessage(), e.getObject());
+            return new Msg(false, "刷新状态失败：" + e.getMessage(), e.getObject());
         } catch (Exception e) {
-            return new Msg(false, e.getMessage());
+            return new Msg(false, "刷新状态失败：" + e.getMessage());
         }
     }
 

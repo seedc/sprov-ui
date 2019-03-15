@@ -29,9 +29,7 @@
 </style>
 
 <el-container id="app" v-cloak>
-    <!--<el-header th:replace="v2ray/header :: header"></el-header>-->
     <el-header style="background-color: #409EFF;">
-        <!--<span>SPROV-UI</span>-->
         <el-menu class="hidden-xs-only"
                  :default-active="defaultActive"
                  mode="horizontal"
@@ -67,11 +65,6 @@
                 <el-alert title="使用方法：点【添加】来增加一个账号，添加或修改账号之后点【重启】来使配置生效，不想用了可以点【关闭】，若关闭后想再次开启，点【重启】即可" type="warning" :closable="false"></el-alert>
             </el-col>
         </el-row>
-        <!--<el-row style="margin-bottom: 10px">-->
-            <!--<el-col>-->
-                <!--<el-alert title="点击每个标签都可以复制里面的内容" type="error" :closable="false"></el-alert>-->
-            <!--</el-col>-->
-        <!--</el-row>-->
         <el-card>
             <div slot="header">
                 <el-button type="success" size="mini" @click="openAdd">添加</el-button>
@@ -113,7 +106,6 @@
                     </el-row>
                     <el-row>
                         <el-col :sm="12">
-                            <!--加密：<el-tag>{{ client.security ? client.security : 'auto' }}</el-tag>-->
                             加密：<el-tag>auto</el-tag>
                         </el-col>
                         <el-col :sm="12">
@@ -143,6 +135,16 @@
                             <span v-if="JSON.stringify(inbound.streamSettings.wsSettings.headers) === '{}'">无</span>
                             <el-button v-else type="text" @click="showHeaders(inbound.streamSettings.wsSettings.headers)">查看</el-button>
                         </el-col>
+                    </el-row>
+                    <el-row v-if="inbound.streamSettings.security === 'tls'">
+                        <el-col :sm="12">
+                            证书域名：<el-tag>{{ inbound.streamSettings.tlsSettings.serverName }}</el-tag>
+                        </el-col>
+                        <!--<el-col v-if="inbound.streamSettings.tlsSettings.certificates[0]" :sm="12">-->
+                            <!--证书，密钥：-->
+                            <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].certificateFile }}</el-tag>-->
+                            <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].keyFile }}</el-tag>-->
+                        <!--</el-col>-->
                     </el-row>
                     <el-row v-if="!isEmpty(inbound.tag)">
                         <el-col :sm="12">
@@ -228,7 +230,6 @@
                             </el-col>
                             <el-col :sm="12">
                                 <el-button type="primary" size="mini" @click="window.open(mtLink(inbound))">直接打开</el-button>
-                                <!--<a :href="mtLink(inbound)" target="_blank">直接打开</a>-->
                             </el-col>
                         </el-row>
                         <el-row>
@@ -252,7 +253,6 @@
             </div>
         </el-card>
     </el-main>
-    <!--<el-footer th:replace="v2ray/footer :: footer"></el-footer>-->
 
     <el-dialog :title="inDL.mode === 'add' ? '添加账号' : '修改账号'"
                :visible.sync="inDL.visible"
@@ -292,14 +292,6 @@
             <el-form-item label="额外id（alterId）" prop="alterId">
                 <el-input type="number" v-model.number="vmess.alterId"></el-input>
             </el-form-item>
-            <!--<el-form-item label="加密">-->
-                <!--<el-select v-model="vmess.security">-->
-                    <!--<el-option label="auto（推荐）" value="auto"></el-option>-->
-                    <!--<el-option label="aes-128-gcm" value="aes-128-gcm"></el-option>-->
-                    <!--<el-option label="chacha20-poly1305" value="chacha20-poly1305"></el-option>-->
-                    <!--<el-option label="none（不推荐）" value="none"></el-option>-->
-                <!--</el-select>-->
-            <!--</el-form-item>-->
         </el-form>
         <!-- shadowsocks 协议 -->
         <el-form v-if="form.protocol === 'shadowsocks'"
@@ -371,8 +363,7 @@
         </el-form>
         <!-- streamSettings -->
         <el-form v-if="form.protocol === 'vmess'"
-                 size="small"
-                 label-position="top">
+                 size="small" label-position="top">
             <el-form-item>
                 <template slot="label">
                     底层传输
@@ -469,6 +460,46 @@
                     <el-button type="success" size="mini" icon="el-icon-plus" @click="ws.headers.push({ name: '', value: '' })"></el-button>
                 </el-row>
             </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    开启 tls
+                    <el-tooltip content="需要域名和ssl证书，如果不懂得使用建议不要开启">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-switch v-model="stream.tls"></el-switch>
+            </el-form-item>
+        </el-form>
+        <!-- tls Settings -->
+        <el-form v-if="form.protocol === 'vmess' && stream.network === 'ws' && stream.security === 'tls'"
+                 size="small" label-position="top">
+            <el-form-item>
+                <template slot="label">
+                    域名
+                    <el-tooltip content="指定服务器端证书的域名，在连接由 IP 建立时有用。">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="tls.serverName"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    证书
+                    <el-tooltip content="证书文件路径，如使用 OpenSSL 生成，后缀名为 .crt。">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="tls.certFile"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    密钥
+                    <el-tooltip content="密钥文件路径，如使用 OpenSSL 生成，后缀名为 .key。目前暂不支持需要密码的 key 文件。">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="tls.keyFile"></el-input>
+            </el-form-item>
         </el-form>
         <!-- 其它 -->
         <el-form v-if="form.protocol !== 'mtproto'" size="small" label-position="top">
@@ -495,7 +526,6 @@
     </el-dialog>
 </el-container>
 
-<!--<div th:replace="common/common_js :: commonJs"></div>-->
 <script src="/res/vue/vue.min.js"></script>
 <script src="/res/element-ui/index.js"></script>
 <script src="/res/qs/qs.min.js"></script>
@@ -506,7 +536,7 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=1.0.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.5.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.6.0"></script>
 
 </body>
 </html>

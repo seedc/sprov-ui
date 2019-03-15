@@ -32,12 +32,12 @@ public class ServerService {
 //    @Autowired
     private V2rayService v2rayService = Context.v2rayService;
 
-    private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    private ThreadService threadService = Context.threadService;
 
     private GetSystemInfoThread thread = new GetSystemInfoThread();
 
     public ServerService() {
-        executor.scheduleAtFixedRate(thread, 0, 1, TimeUnit.SECONDS);
+        threadService.scheduleAtFixedRate(thread, 0, 1, TimeUnit.SECONDS);
     }
 
     /**

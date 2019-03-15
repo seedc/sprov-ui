@@ -15,11 +15,12 @@ public class LoginFilter implements Filter {
     public void handle(Request request, Response response) {
         if (SessionUtil.getUser(request) == null) {
             if (SparkUtil.isAjax(request)) {
-                response.body(new Msg(false, "您的登录时效已过，请重新登录").toString());
+                response.type("text/json");
+                halt(new Msg(false, "您的登录时效已过，请重新登录").toString());
             } else {
                 response.redirect("/");
+                halt();
             }
-            halt();
         }
     }
 }

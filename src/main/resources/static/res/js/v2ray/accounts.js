@@ -2,6 +2,7 @@ const defaultInbound = {
     settings: {},
     streamSettings: {
         network: 'tcp',
+        security: 'none',
         tcpSettings: {
             header: {
                 type: 'none'
@@ -21,7 +22,11 @@ const defaultInbound = {
         httpSettings: {
             host: [],
             path: '/'
-        }
+        },
+        tlsSettings: {
+            serverName: '',
+            certificates: [{certificateFile: '', keyFile: ''}],
+        },
     },
     tag: ''
 };
@@ -97,7 +102,8 @@ let app = new Vue({
         mt: {},
         stream: {},
         kcp: {},
-        ws: {}
+        ws: {},
+        tls: {}
     },
     methods: {
         menuSelect: function (index) { location.href = index; },
@@ -147,6 +153,8 @@ let app = new Vue({
                 secret: randomMTSecret()
             };
             this.stream = {
+                tls: false,
+                security: 'none',
                 network: 'tcp'
             };
             this.kcp = {
@@ -159,6 +167,11 @@ let app = new Vue({
                 headers: [
                     { name: '', value: '' }
                 ]
+            };
+            this.tls = {
+                serverName: '',
+                certFile: '',
+                keyFile: ''
             };
             this.inDL.mode = 'add';
             this.inDL.visible = true;
@@ -173,10 +186,11 @@ let app = new Vue({
                 this.vmess = {
                     id: client.id,
                     alterId: client.alterId,
-                    // security: client.security ? client.security : 'auto'
                 };
                 let streamSettings = inbound.streamSettings;
                 this.stream = {
+                    tls: streamSettings.security === 'tls',
+                    security: streamSettings.security,
                     network: streamSettings.network
                 };
                 let kcpSettings = streamSettings.kcpSettings;
@@ -196,6 +210,12 @@ let app = new Vue({
                 this.ws = {
                     path: wsSettings.path,
                     headers: headers
+                };
+                let tlsSettings = streamSettings.tlsSettings;
+                this.tls = {
+                    serverName: tlsSettings.serverName,
+                    certFile: tlsSettings.certificates[0].certificateFile,
+                    keyFile: tlsSettings.certificates[0].keyFile
                 };
             } else if (inbound.protocol === 'shadowsocks') {
                 this.ss = {
@@ -235,11 +255,11 @@ let app = new Vue({
                 settings = {
                     clients: [{
                         id: vmess.id,
-                        alterId: vmess.alterId,
-                        // security: vmess.security
+                        alterId: vmess.alterId
                     }]
                 };
                 streamSettings = {
+                    security: stream.security,
                     network: stream.network
                 };
                 if (stream.network === 'kcp') {
@@ -262,6 +282,16 @@ let app = new Vue({
                     streamSettings.wsSettings = {
                         path: ws.path,
                         headers: headers
+                    };
+                }
+                if (stream.security === 'tls') {
+                    const tls = this.tls;
+                    streamSettings.tlsSettings = {
+                        serverName: tls.serverName,
+                        certificates: [{
+                            certificateFile: tls.certFile,
+                            keyFile: tls.keyFile
+                        }]
                     };
                 }
             } else if (form.protocol === 'shadowsocks') {
@@ -474,7 +504,7 @@ let app = new Vue({
             }
             let obj = {
                 v: '2',
-                ps: '',
+                ps: inbound.tag,
                 add: this.ip,
                 port: inbound.port,
                 id: client.id,
@@ -513,6 +543,9 @@ let app = new Vue({
     watch: {
         'config': function (config) {
             this.setInbounds(config.inbounds);
+        },
+        'stream.tls': function (tls) {
+            this.stream.security = tls ? 'tls' : 'none';
         }
     },
     mounted: function () {

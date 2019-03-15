@@ -104,6 +104,7 @@ public class InboundsController {
             configService.delInbound(port);
             return new Msg(true, "删除成功，需重启v2ray生效");
         } catch (Exception e) {
+            e.printStackTrace();
             return new Msg(false, "删除失败：" + e.getMessage());
         }
     }

@@ -43,7 +43,16 @@
         </el-dropdown>
     </el-header>
     <el-main>
+        <el-row v-if="!isLastVersion" style="margin-bottom: 10px">
+            <el-col>
+                <el-alert :title="'发现面板新版本：' + lastVersion + '，查看升级内容：https://github.com/sprov065/sprov-ui/releases'" type="success" :closable="false"></el-alert>
+            </el-col>
+        </el-row>
         <el-card>
+            <div slot="header">
+                <el-button type="success" size="mini" @click="restart">重启面板</el-button>
+                <el-button v-if="!isLastVersion" type="primary" size="mini" @click="update">一键升级</el-button>
+            </div>
             <el-table :data="tableData" :show-header="false">
                 <el-table-column prop="label"></el-table-column>
                 <el-table-column>
@@ -64,7 +73,7 @@
     </el-main>
     <!--<el-footer th:replace="v2ray/footer :: footer"></el-footer>-->
     <el-footer style="background-color: #409EFF">
-        <div style="text-align: center">Power By <a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
+        <div style="text-align: center">Github - <a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
     </el-footer>
 </el-container>
 
@@ -79,6 +88,6 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=1.0.0"></script>
-<script src="/res/js/v2ray/index.js?v=2.4.0"></script>
+<script src="/res/js/v2ray/index.js?v=2.6.0"></script>
 </body>
 </html>

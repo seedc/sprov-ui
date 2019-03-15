@@ -37,4 +37,11 @@ public class BaseRoute {
         };
     }
 
+    public Route robots() {
+        return (request, response) -> {
+            response.type("text/plain");
+            return "User-agent: *\n" + "Disallow: /";
+        };
+    }
+
 }
