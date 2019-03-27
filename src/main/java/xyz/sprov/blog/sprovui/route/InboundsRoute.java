@@ -18,13 +18,14 @@ public class InboundsRoute {
             halt(404);
         }
         String protocol = request.queryParams("protocol");
+        String listen = request.queryParams("listen");
         String settings = request.queryParams("settings");
         String streamSettings = request.queryParams("streamSettings");
         String tag = request.queryParams("tag");
         if ("add".equals(action)) {
-            return controller.add(port, protocol, settings, streamSettings, tag);
+            return controller.add(listen, port, protocol, settings, streamSettings, tag);
         } else if ("edit".equals(action)) {
-            return controller.edit(port, protocol, settings, streamSettings, tag);
+            return controller.edit(listen, port, protocol, settings, streamSettings, tag);
         }
         throw new IllegalArgumentException("Unknown action: " + action);
     }

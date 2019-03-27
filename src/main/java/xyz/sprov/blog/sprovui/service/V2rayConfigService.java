@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
+import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.venum.Protocol;
 
 import java.io.File;
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 
 //@Service
 public class V2rayConfigService {
+
+    private ExtraConfigService extraConfigService = Context.extraConfigService;
 
 //    @Value("${v2ray.config-location}")
     private String configLocation = "/etc/v2ray/config.json";

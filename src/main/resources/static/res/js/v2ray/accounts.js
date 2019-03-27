@@ -1,4 +1,5 @@
 const defaultInbound = {
+    listen: '0.0.0.0',
     settings: {},
     streamSettings: {
         network: 'tcp',
@@ -82,6 +83,7 @@ const forms = ['inForm', 'vmessForm', 'ssForm', 'dokoForm', 'kcpForm', 'wsForm']
 let app = new Vue({
     el: '#app',
     data: {
+        loading: false,
         btnLoad: false,
         defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
         ip: location.hostname,
@@ -108,6 +110,7 @@ let app = new Vue({
     methods: {
         menuSelect: function (index) { location.href = index; },
         getConfig: function () {
+            this.loading = true;
             post({
                 url: '/v2ray/config',
                 success: data => {
@@ -119,18 +122,21 @@ let app = new Vue({
                             type: 'error'
                         });
                     }
+                    this.loading = false;
                 },
                 error: e => {
                     this.message({
                         message: e,
                         type: 'error'
                     });
+                    this.loading = false;
                 }
             });
         },
         openAdd: function () {
             this.form = {
                 protocol: 'vmess',
+                listen: '0.0.0.0',
                 port: randomIntRange(10000, 60000),
                 tag: ''
             };
@@ -179,6 +185,7 @@ let app = new Vue({
         openEdit: function(inbound, client) {
             this.form = {
                 protocol: inbound.protocol,
+                listen: inbound.listen,
                 port: inbound.port,
                 tag: inbound.tag
             };
@@ -317,6 +324,7 @@ let app = new Vue({
                 };
             }
             return {
+                listen: isEmpty(form.listen) ? '0.0.0.0' : form.listen,
                 port: form.port,
                 protocol: form.protocol,
                 tag: form.tag,
@@ -505,7 +513,7 @@ let app = new Vue({
             let obj = {
                 v: '2',
                 ps: inbound.tag,
-                add: this.ip,
+                add: inbound.listen === '0.0.0.0' ? this.ip : inbound.listen,
                 port: inbound.port,
                 id: client.id,
                 aid: client.alterId,
@@ -519,12 +527,12 @@ let app = new Vue({
         },
         ssLink: function(inbound) {
             let settings = inbound.settings;
-            return 'ss://' + safeBase64(settings.method + ':' + settings.password + '@' + this.ip + ':' + inbound.port);
+            return 'ss://' + safeBase64(settings.method + ':' + settings.password + '@' + (inbound.listen === '0.0.0.0' ? this.ip : inbound.listen) + ':' + inbound.port);
         },
         mtLink: function(inbound) {
             let settings = inbound.settings;
             let user = settings.users[0];
-            return 'https://t.me/proxy?server=' + this.ip + '&port=' + inbound.port + '&secret=' + user.secret;
+            return 'https://t.me/proxy?server=' + (inbound.listen === '0.0.0.0' ? this.ip : inbound.listen) + '&port=' + inbound.port + '&secret=' + user.secret;
         },
         arrToString: function (arr, split) {
             if (isEmpty(split)) {

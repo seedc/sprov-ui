@@ -71,6 +71,7 @@
                 <el-button type="primary" size="mini" @click="restart">重启</el-button>
                 <el-button type="danger" size="mini" @click="stop">关闭</el-button>
             </div>
+            <div v-loading="loading">
             <div v-for="inbound in inbounds" style="margin-top: 10px;">
                 <!-- vmess -->
                 <el-card v-if="inbound.protocol === 'vmess'"
@@ -90,7 +91,7 @@
                     </el-row>
                     <el-row>
                         <el-col :sm="12">
-                            IP：<el-tag>{{ ip }}</el-tag>
+                            IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
                         </el-col>
                         <el-col :sm="12">
                             端口：<el-tag>{{ inbound.port }}</el-tag>
@@ -172,7 +173,7 @@
                         </el-row>
                         <el-row>
                             <el-col :sm="12">
-                                IP：<el-tag>{{ ip }}</el-tag>
+                                IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
                             </el-col>
                             <el-col :sm="12">
                                 端口：<el-tag>{{ inbound.port }}</el-tag>
@@ -199,7 +200,7 @@
                     <div v-if="inbound.protocol === 'dokodemo-door'">
                         <el-row>
                             <el-col :sm="12">
-                                IP：<el-tag>{{ ip }}</el-tag>
+                                IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
                             </el-col>
                             <el-col :sm="12">
                                 端口：<el-tag>{{ inbound.port }}</el-tag>
@@ -234,7 +235,7 @@
                         </el-row>
                         <el-row>
                             <el-col :sm="12">
-                                IP：<el-tag>{{ ip }}</el-tag>
+                                IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
                             </el-col>
                             <el-col :sm="12">
                                 端口：<el-tag>{{ inbound.port }}</el-tag>
@@ -250,6 +251,7 @@
                         </el-row>
                     </div>
                 </el-card>
+            </div>
             </div>
         </el-card>
     </el-main>
@@ -268,6 +270,15 @@
                     <el-option label="dokodemo-door（端口转发）" value="dokodemo-door"></el-option>
                     <el-option label="mtproto（telegram代理）" value="mtproto"></el-option>
                 </el-select>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    监听 IP
+                    <el-tooltip content="若服务器有多个IP，可以指定只监听一个IP，配置错误的IP会导致v2ray重启失败，默认0.0.0.0表示监听所有IP">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model="form.listen"></el-input>
             </el-form-item>
             <el-form-item prop="port">
                 <template slot="label">
@@ -535,8 +546,8 @@
 <script src="/res/qrcode/qrious.min.js"></script>
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
-<script src="/res/js/axios-init.js?v=1.0.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.6.0"></script>
+<script src="/res/js/axios-init.js?v=2.7.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.7.0"></script>
 
 </body>
 </html>

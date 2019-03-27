@@ -27,6 +27,7 @@ public class SprovUISparkApp {
         exception(Exception.class, (exception, request, response) -> System.out.println(exception.getMessage()));
 
         staticFiles.location("/static");
+        staticFiles.expireTime(3600 * 24 * 30 * 6);
 
         before("", encodingFilter);
         before("/*", encodingFilter);

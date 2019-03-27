@@ -22,6 +22,7 @@ public class Config {
             properties.setProperty("port", "80");
             properties.setProperty("username", "sprov");
             properties.setProperty("password", "blog.sprov.xyz");
+            properties.setProperty("basePath", "");
             try {
                 File file = new File(configPath);
                 FileUtils.forceMkdir(file.getParentFile());
@@ -45,5 +46,7 @@ public class Config {
     public static String getPassword() {
         return properties.getProperty("password", "blog.sprov.xyz");
     }
+
+    public static String getBasePath() { return properties.getProperty("basePath", ""); }
 
 }

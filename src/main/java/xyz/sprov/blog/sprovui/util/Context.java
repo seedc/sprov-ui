@@ -21,6 +21,7 @@ public class Context {
     public static final JsonTransformer jsonTransformer = new JsonTransformer();
 
     public static final ThreadService threadService = new ThreadService();
+    public static final ExtraConfigService extraConfigService = new ExtraConfigService();
     public static final V2rayService v2rayService = new V2rayService();
     public static final V2rayConfigService v2rayConfigService = new V2rayConfigService();
     public static final ServerService serverService = new ServerService();

@@ -16,12 +16,14 @@ public class InboundsController {
 //    @Autowired
     private V2rayConfigService configService = Context.v2rayConfigService;
 
-    private JSONObject getInbound(int port,
+    private JSONObject getInbound(String listen,
+                                  int port,
                                   String protocol,
                                   String settings,
                                   String streamSettings,
                                   String tag) {
         JSONObject inbound = new JSONObject();
+        inbound.put("listen", listen);
         inbound.put("port", port);
         inbound.put("protocol", protocol);
         inbound.put("tag", tag);
@@ -48,14 +50,15 @@ public class InboundsController {
      */
 //    @ResponseBody
 //    @PostMapping("add")
-    public Msg add(int port,
+    public Msg add(String listen,
+                   int port,
                    String protocol,
                    String settings,
                    String streamSettings,
                    String tag) {
         JSONObject inbound;
         try {
-            inbound = getInbound(port, protocol, settings, streamSettings, tag);
+            inbound = getInbound(listen, port, protocol, settings, streamSettings, tag);
         } catch (V2rayConfigException e) {
             return new Msg(false, e.getMessage());
         }
@@ -76,14 +79,15 @@ public class InboundsController {
 
 //    @ResponseBody
 //    @PostMapping("edit")
-    public Msg edit(int port,
+    public Msg edit(String listen,
+                    int port,
                     String protocol,
                     String settings,
                     String streamSettings,
                     String tag) {
         JSONObject inbound;
         try {
-            inbound = getInbound(port, protocol, settings, streamSettings, tag);
+            inbound = getInbound(listen, port, protocol, settings, streamSettings, tag);
         } catch (V2rayConfigException e) {
             return new Msg(false, e.getMessage());
         }
@@ -114,12 +118,11 @@ public class InboundsController {
      */
 //    @ResponseBody
 //    @PostMapping("vmess/add")
-    public Msg vmessAdd(int port, String id, int alterId, String secure) {
+    public Msg vmessAdd(int port, String id, int alterId) {
         JSONObject client = new JSONObject();
         client.put("port", port);
         client.put("id", id);
         client.put("alterId", alterId);
-        client.put("secure", secure);
         try {
             configService.addVmessUser(client);
             return new Msg(true, "修改配置文件成功，需重启v2ray生效");
