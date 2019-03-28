@@ -54,7 +54,15 @@ elif [[ x"${release}" == x"debian" ]]; then
 fi
 
 install_java() {
-    if [[ x"${release}" == x"centos" ]]; then
+	if [[ -f /usr/bin/java ]]; then
+		java_version=`/usr/bin/java -version 2>&1 |awk 'NR==1{ gsub(/"/,""); print $3 }'`
+		if [[ "${java_version}" > "1.8" ]]; then
+			echo -e "${green}已检测到1.8及以上版本的java，无需重复安装${plain}"
+		else
+			echo -e "错误：${green}/usr/bin/java${red}的版本低于1.8，请安装大于等于1.8版本的java${plain}"
+			exit -1
+		fi
+    elif [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk curl -y
     elif [[ x"${release}" == x"debian" || x"${release}" == x"ubuntu" ]]; then
         apt install default-jre curl -y
@@ -66,6 +74,7 @@ install_java() {
 }
 
 install_v2ray() {
+	echo -e "${green}开始安装or升级v2ray${plain}"
     bash <(curl -L -s https://install.direct/go.sh) -f
     if [[ $? -ne 0 ]]; then
         echo -e "${red}v2ray安装或升级失败，请检查错误信息${plain}"
@@ -160,6 +169,7 @@ install_sprov-ui() {
         rm /usr/local/sprov-ui/sprov-ui.war -f
     fi
     last_version=$(curl --silent "https://api.github.com/repos/sprov065/sprov-ui/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    echo -e "检测到sprov-ui最新版本：${last_version}，开始下载核心文件"
     wget -N --no-check-certificate -O /usr/local/sprov-ui/sprov-ui.jar https://github.com/sprov065/sprov-ui/releases/download/${last_version}/sprov-ui-${last_version}.jar
     if [[ $? -ne 0 ]]; then
         echo -e "${red}下载sprov-ui核心文件失败，请确保你的服务器能够下载Github的文件，如果多次安装失败，请参考手动安装教程${plain}"
