@@ -53,15 +53,22 @@ elif [[ x"${release}" == x"debian" ]]; then
     fi
 fi
 
+install_bc() {
+    command -v bc >/dev/null 2>&1 || yum install bc -y || apt install bc -y
+}
+
 install_java() {
-	if [[ -f /usr/bin/java ]]; then
-		java_version=`/usr/bin/java -version 2>&1 |awk 'NR==1{ gsub(/"/,""); print $3 }'`
-		if [[ "${java_version}" > "1.8" ]]; then
-			echo -e "${green}已检测到1.8及以上版本的java，无需重复安装${plain}"
-		else
-			echo -e "错误：${green}/usr/bin/java${red}的版本低于1.8，请安装大于等于1.8版本的java${plain}"
-			exit -1
-		fi
+    if [[ -f /usr/bin/java ]]; then
+        install_bc
+        java_version=`/usr/bin/java -version 2>&1 | awk -F '\"' 'NR==1{print $2}' | awk -F '.' '{OFS="."; print $1,$2;}'`
+        require_version=1.8
+        is_ok=`echo "$java_version>=$require_version" | bc`
+        if [[ is_ok -eq 1 ]]; then
+	    echo -e "${green}已检测到1.8及以上版本的java，无需重复安装${plain}"
+	else
+	    echo -e "错误：${green}/usr/bin/java${red}的版本低于1.8，请安装大于等于1.8版本的java${plain}"
+	    exit -1
+	fi
     elif [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk curl -y
     elif [[ x"${release}" == x"debian" || x"${release}" == x"ubuntu" ]]; then
@@ -74,7 +81,7 @@ install_java() {
 }
 
 install_v2ray() {
-	echo -e "${green}开始安装or升级v2ray${plain}"
+    echo -e "${green}开始安装or升级v2ray${plain}"
     bash <(curl -L -s https://install.direct/go.sh) -f
     if [[ $? -ne 0 ]]; then
         echo -e "${red}v2ray安装或升级失败，请检查错误信息${plain}"
