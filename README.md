@@ -32,7 +32,7 @@
 # 一键安装&升级面板
 >面板已内置升级功能（每30分钟从 Github 检测一次）
 ```
-wget -O install.sh -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/install.sh && bash install.sh
+wget -O install.sh -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh && bash install.sh
 ```
 # 详细教程
 https://blog.sprov.xyz/2019/02/09/sprov-ui/
