@@ -37,5 +37,8 @@ wget -O install.sh -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh 
 # 详细教程
 https://blog.sprov.xyz/2019/02/09/sprov-ui/
 
+# Telegram 群组
+https://t.me/sprov_blog
+
 # Telegram 更新通知频道
-https://t.me/sprov_ui
+https://t.me/sprov_channel
