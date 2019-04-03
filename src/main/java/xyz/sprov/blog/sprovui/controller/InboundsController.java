@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
+import xyz.sprov.blog.sprovui.service.ExtraConfigService;
 import xyz.sprov.blog.sprovui.service.V2rayConfigService;
 import xyz.sprov.blog.sprovui.util.Context;
 
@@ -16,17 +17,19 @@ public class InboundsController {
 //    @Autowired
     private V2rayConfigService configService = Context.v2rayConfigService;
 
+    private ExtraConfigService extraConfigService = Context.extraConfigService;
+
     private JSONObject getInbound(String listen,
                                   int port,
                                   String protocol,
                                   String settings,
                                   String streamSettings,
-                                  String tag) {
+                                  String remark) {
         JSONObject inbound = new JSONObject();
         inbound.put("listen", listen);
         inbound.put("port", port);
         inbound.put("protocol", protocol);
-        inbound.put("tag", tag);
+        inbound.put("remark", remark);
 //        if (!StringUtils.isBlank(tag)) {
 //        }
         try {
@@ -55,10 +58,10 @@ public class InboundsController {
                    String protocol,
                    String settings,
                    String streamSettings,
-                   String tag) {
+                   String remark) {
         JSONObject inbound;
         try {
-            inbound = getInbound(listen, port, protocol, settings, streamSettings, tag);
+            inbound = getInbound(listen, port, protocol, settings, streamSettings, remark);
         } catch (V2rayConfigException e) {
             return new Msg(false, e.getMessage());
         }
@@ -84,10 +87,14 @@ public class InboundsController {
                     String protocol,
                     String settings,
                     String streamSettings,
+                    String remark,
                     String tag) {
         JSONObject inbound;
         try {
-            inbound = getInbound(listen, port, protocol, settings, streamSettings, tag);
+            inbound = getInbound(listen, port, protocol, settings, streamSettings, remark);
+            if (!StringUtils.isEmpty(tag)) {
+                inbound.put("tag", tag);
+            }
         } catch (V2rayConfigException e) {
             return new Msg(false, e.getMessage());
         }
@@ -110,6 +117,58 @@ public class InboundsController {
         } catch (Exception e) {
             e.printStackTrace();
             return new Msg(false, "删除失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 开启 inbound 流量统计
+     */
+    public Msg openTraffic(int port) {
+        try {
+            JSONObject inbound = configService.getInbound(port);
+            if (inbound == null) {
+                return new Msg(false, "此账号不存在");
+            }
+            inbound.put("tag", "inbound-" + port);
+            configService.editInbound(inbound);
+            return new Msg(true, "操作成功，需重启v2ray生效");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 重置端口流量
+     */
+    public Msg resetTraffic(int port) {
+        try {
+            JSONObject inbound = configService.getInbound(port);
+            if (inbound == null) {
+                return new Msg(false, "找不到端口为" + port + "的账号");
+            }
+            String tag = inbound.getString("tag");
+            if (StringUtils.isEmpty(tag)) {
+                return new Msg(false, "端口为" + port + "的账号没有tag标识");
+            }
+            extraConfigService.resetTraffic(tag);
+            return new Msg(true, "操作成功，此功能无需重启");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 重置所有流量
+     */
+    public Msg resetAllTraffic() {
+        try {
+            extraConfigService.resetAllTraffic();
+            return new Msg(true, "操作成功，此功能无需重启");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Msg(false, "操作失败：" + e.getMessage());
         }
     }
 

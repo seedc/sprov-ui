@@ -67,9 +67,10 @@
         </el-row>
         <el-card>
             <div slot="header">
-                <el-button type="success" size="mini" @click="openAdd">添加</el-button>
-                <el-button type="primary" size="mini" @click="restart">重启</el-button>
-                <el-button type="danger" size="mini" @click="stop">关闭</el-button>
+                <el-button type="success" size="mini"  style="margin-left: 0" @click="openAdd">添加</el-button>
+                <el-button type="primary" size="mini"  style="margin-left: 0" @click="restart">重启</el-button>
+                <el-button type="warning" size="mini"  style="margin-left: 0" @click="resetAllTraffic">重置</el-button>
+                <el-button type="danger" size="mini"  style="margin-left: 0" @click="stop">关闭</el-button>
             </div>
             <div v-loading="loading">
             <div v-for="inbound in inbounds" style="margin-top: 10px;">
@@ -79,6 +80,8 @@
                     <div slot="header">
                         <el-tag type="success">{{ inbound.protocol }}</el-tag>
                         <el-button type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
+                        <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                        <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
                         <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
                     </div>
                     <el-row>
@@ -147,9 +150,25 @@
                             <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].keyFile }}</el-tag>-->
                         <!--</el-col>-->
                     </el-row>
+                    <el-row v-if="!isEmpty(inbound.tag) || !isEmpty(inbound.remark)">
+                        <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                            <el-tooltip>
+                                <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
+                                <i class="el-icon-warning"></i>
+                            </el-tooltip>
+                            tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                        </el-col>
+                        <el-col v-if="!isEmpty(inbound.remark)" :sm="12">
+                            备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                        </el-col>
+                    </el-row>
                     <el-row v-if="!isEmpty(inbound.tag)">
                         <el-col :sm="12">
-                            tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                            上传/下载：
+                            <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
                         </el-col>
                     </el-row>
                 </el-card>
@@ -159,15 +178,16 @@
                     <div slot="header">
                         <el-tag type="primary">{{ inbound.protocol }}</el-tag>
                         <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
+                        <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                        <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
                         <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
                     </div>
                     <!-- shadowsocks -->
-                    <div v-if="inbound.protocol === 'shadowsocks'">
+                    <template v-if="inbound.protocol === 'shadowsocks'">
                         <el-row>
                             <el-col :sm="12">
                                 <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="ssLink(inbound)">复制ss链接</el-button>
                             </el-col>
-                            <el-col :sm="12">
                                 <el-button type="primary" size="mini" @click="showQrCode(ssLink(inbound))">二维码</el-button>
                             </el-col>
                         </el-row>
@@ -192,12 +212,21 @@
                                 网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
                             </el-col>
                             <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                <el-tooltip>
+                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
+                                    <i class="el-icon-warning"></i>
+                                </el-tooltip>
                                 tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
                             </el-col>
                         </el-row>
-                    </div>
+                        <el-row v-if="!isEmpty(inbound.remark)">
+                            <el-col :sm="12">
+                                备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </template>
                     <!-- dokodemo-door -->
-                    <div v-if="inbound.protocol === 'dokodemo-door'">
+                    <template v-if="inbound.protocol === 'dokodemo-door'">
                         <el-row>
                             <el-col :sm="12">
                                 IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
@@ -219,12 +248,21 @@
                                 转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
                             </el-col>
                             <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                <el-tooltip>
+                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
+                                    <i class="el-icon-warning"></i>
+                                </el-tooltip>
                                 tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
                             </el-col>
                         </el-row>
-                    </div>
+                        <el-row v-if="!isEmpty(inbound.remark)">
+                            <el-col :sm="12">
+                                备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </template>
                     <!-- mtproto -->
-                    <div v-if="inbound.protocol === 'mtproto'">
+                    <template v-if="inbound.protocol === 'mtproto'">
                         <el-row>
                             <el-col :sm="12">
                                 <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="mtLink(inbound)">复制链接</el-button>
@@ -246,10 +284,28 @@
                                 密钥：<el-tag>{{ inbound.settings.users[0].secret }}</el-tag>
                             </el-col>
                             <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
+                                <el-tooltip>
+                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
+                                    <i class="el-icon-warning"></i>
+                                </el-tooltip>
                                 tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
                             </el-col>
                         </el-row>
-                    </div>
+                        <el-row v-if="!isEmpty(inbound.remark)">
+                            <el-col :sm="12">
+                                备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </template>
+                    <el-row v-if="!isEmpty(inbound.tag)">
+                        <el-col :sm="12">
+                            上传/下载：
+                            <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
+                        </el-col>
+                        <el-col :sm="12">
+                            总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
+                        </el-col>
+                    </el-row>
                 </el-card>
             </div>
             </div>
@@ -514,14 +570,8 @@
         </el-form>
         <!-- 其它 -->
         <el-form v-if="form.protocol !== 'mtproto'" size="small" label-position="top">
-            <el-form-item>
-                <template slot="label">
-                    tag标识（可选）
-                    <el-tooltip content="若不为空则必须唯一，否则会无法连接">
-                        <i class="el-icon-question"></i>
-                    </el-tooltip>
-                </template>
-                <el-input v-model.trim="form.tag"></el-input>
+            <el-form-item label="备注（可选）">
+                <el-input v-model.trim="form.remark"></el-input>
             </el-form-item>
         </el-form>
         <el-form size="small" label-position="top">
@@ -547,7 +597,7 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.7.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.8.0"></script>
 
 </body>
 </html>

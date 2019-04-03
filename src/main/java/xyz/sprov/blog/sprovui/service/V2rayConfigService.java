@@ -4,8 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
+import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.venum.Protocol;
 
@@ -20,7 +21,9 @@ import java.util.regex.Pattern;
 //@Service
 public class V2rayConfigService {
 
-    private ExtraConfigService extraConfigService = Context.extraConfigService;
+    private V2rayService v2rayService = Context.v2rayService;
+
+    private ThreadService threadService = Context.threadService;
 
 //    @Value("${v2ray.config-location}")
     private String configLocation = "/etc/v2ray/config.json";
@@ -28,8 +31,11 @@ public class V2rayConfigService {
     private final Pattern uuidPattern = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
     public V2rayConfigService() {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            configLocation = "d:" + configLocation;
+        try {
+            openV2rayApi();
+        } catch (Exception e) {
+            System.err.println("开启 v2ray api 失败：" + e.getMessage());
+            System.exit(-1);
         }
     }
 
@@ -50,7 +56,7 @@ public class V2rayConfigService {
     /**
      * 将内容覆盖写入v2ray配置文件中
      */
-    public void writeConfig(JSONObject config) throws IOException {
+    private void writeConfig(JSONObject config) throws IOException {
         String jsonStr = JSON.toJSONString(config, true);
         FileUtils.write(new File(configLocation), jsonStr, "UTF-8");
     }
@@ -65,6 +71,18 @@ public class V2rayConfigService {
             config.put("inbounds", inbounds);
         }
         return inbounds;
+    }
+
+    public JSONObject getInbound(int port) throws IOException {
+        JSONArray inbounds = getInbounds(getConfig());
+        for (Object obj : inbounds) {
+            JSONObject inbound = (JSONObject) obj;
+            int p = inbound.getIntValue("port");
+            if (p == port) {
+                return inbound;
+            }
+        }
+        return null;
     }
 
     private JSONArray getVmessUsers(JSONObject inbound) {
@@ -117,6 +135,8 @@ public class V2rayConfigService {
             String tag = "tg-in-" + port;
             inbound.put("tag", tag);
             addMTOutboundAndRoute(config, tag);
+        } else {
+            inbound.put("tag", "inbound-" + port);
         }
         JSONArray inbounds = getInbounds(config);
         for (Object inb : inbounds) {
@@ -151,11 +171,7 @@ public class V2rayConfigService {
     }
 
     private void addOrDelMTRoute(JSONObject config, String tag, String action) {
-        JSONObject routing = config.getJSONObject("routing");
-        if (routing == null) {
-            routing = JSONObject.parseObject("{'rules': []}");
-            config.put("routing", routing);
-        }
+        JSONObject routing = getRouting(config);
         JSONArray rules = routing.getJSONArray("rules");
         JSONObject tgRule = null;
         for (Object obj : rules) {
@@ -273,6 +289,101 @@ public class V2rayConfigService {
         settings.put("clients", clients);
         inbound.put("settings", settings);
         addInbound(inbound);
+    }
+
+    public void openV2rayApi() throws IOException {
+        JSONObject config = getConfig();
+        config.put("api", JSONObject.parseObject("{" +
+                "    'tag': 'api'," +
+                "    'services': [" +
+                "      'HandlerService'," +
+                "      'LoggerService'," +
+                "      'StatsService'" +
+                "    ]" +
+                "  }"));
+        config.put("stats", new JSONObject());
+        JSONObject policy = getPolicy(config);
+        JSONObject system = policy.getJSONObject("system");
+        if (system == null) {
+            system = new JSONObject();
+            policy.put("system", system);
+        }
+        system.put("statsInboundUplink", true);
+        system.put("statsInboundDownlink", true);
+        JSONArray inbounds = getInbounds(config);
+        int apiPort;
+        do {
+            apiPort = RandomUtils.nextInt(60000);
+        } while (containsPort(inbounds, apiPort));
+        removeTag(inbounds, "api");
+        inbounds.add(JSONObject.parseObject("{" +
+                "    'listen': '127.0.0.1'," +
+                "    'port': " + apiPort + "," +
+                "    'protocol': 'dokodemo-door'," +
+                "    'settings': {" +
+                "      'address': '127.0.0.1'" +
+                "    }," +
+                "    'tag': 'api'" +
+                "  }"));
+        Config.setApiPort(apiPort);
+        JSONObject routing = getRouting(config);
+        JSONArray rules = routing.getJSONArray("rules");
+        rules.removeIf(o -> {
+            JSONObject rule = (JSONObject) o;
+            return "api".equals(rule.getString("outboundTag"));
+        });
+        rules.add(0, JSONObject.parseObject("{" +
+                "      'type': 'field'," +
+                "      'inboundTag': ['api']," +
+                "      'outboundTag': 'api'" +
+                "    }"));
+        writeConfig(config);
+
+        threadService.execute(() -> {
+            try {
+                v2rayService.restart();
+            } catch (Exception e) {
+                System.err.println("v2ray 重启失败：" + e.getMessage());
+            }
+        });
+    }
+
+    private void removeTag(JSONArray inbounds, String tag) {
+        inbounds.removeIf(o -> {
+            JSONObject inbound = (JSONObject) o;
+            return tag.equals(inbound.getString("tag"));
+        });
+    }
+
+    private JSONObject getRouting(JSONObject config) {
+        JSONObject routing = config.getJSONObject("routing");
+        if (routing == null) {
+            routing = JSONObject.parseObject("{" +
+                    "    'domainStrategy': 'IPIfNonMatch'," +
+                    "    'rules': []" +
+                    "  }");
+            config.put("routing", routing);
+        }
+        return routing;
+    }
+
+    private JSONObject getPolicy(JSONObject config) {
+        JSONObject policy = config.getJSONObject("policy");
+        if (policy == null) {
+            policy = new JSONObject();
+            config.put("policy", policy);
+        }
+        return policy;
+    }
+
+    private boolean containsPort(JSONArray inbounds, int port) {
+        for (Object obj : inbounds) {
+            JSONObject inbound = (JSONObject) obj;
+            if (port == inbound.getIntValue("port")) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

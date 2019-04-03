@@ -308,7 +308,8 @@ public class ServerService {
                 line = line.trim();
                 if ((line.startsWith("eth")
                         || line.startsWith("en")
-                        || line.startsWith("wlan"))
+                        || line.startsWith("wlan")
+                        || line.startsWith("venet"))
                         && line.contains(":")) {
                     List<Long> numbers = getNumbers(line.substring(line.indexOf(':')));
                     down += numbers.get(0);

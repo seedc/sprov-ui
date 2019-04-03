@@ -24,6 +24,11 @@ public class ExecUtil {
         return exec.waitForResult(timeout, timeUnit);
     }
 
+    public static String execForResult(long timeout, TimeUnit timeUnit, String... commands) throws IOException, InterruptedException {
+        Exec exec = new Exec(commands);
+        return exec.waitForResult(timeout, timeUnit);
+    }
+
     public static int execForStatus(String command) throws IOException, InterruptedException {
         Exec exec = new Exec(command);
         return exec.waitFor();

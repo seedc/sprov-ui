@@ -21,11 +21,12 @@ public class InboundsRoute {
         String listen = request.queryParams("listen");
         String settings = request.queryParams("settings");
         String streamSettings = request.queryParams("streamSettings");
-        String tag = request.queryParams("tag");
+        String remark = request.queryParams("remark");
         if ("add".equals(action)) {
-            return controller.add(listen, port, protocol, settings, streamSettings, tag);
+            return controller.add(listen, port, protocol, settings, streamSettings, remark);
         } else if ("edit".equals(action)) {
-            return controller.edit(listen, port, protocol, settings, streamSettings, tag);
+            String tag = request.queryParams("tag");
+            return controller.edit(listen, port, protocol, settings, streamSettings, remark, tag);
         }
         throw new IllegalArgumentException("Unknown action: " + action);
     }
@@ -46,6 +47,30 @@ public class InboundsRoute {
             }
             return controller.del(port);
         };
+    }
+
+    public Route openTraffic() {
+        return (request, response) -> {
+            Integer port = request.queryMap("port").integerValue();
+            if (port == null) {
+                halt(404);
+            }
+            return controller.openTraffic(port);
+        };
+    }
+
+    public Route resetTraffic() {
+        return (request, response) -> {
+            Integer port = request.queryMap("port").integerValue();
+            if (port == null) {
+                halt(404);
+            }
+            return controller.resetTraffic(port);
+        };
+    }
+
+    public Route resetAllTraffic() {
+        return (request, response) -> controller.resetAllTraffic();
     }
 
 }

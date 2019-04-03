@@ -20,7 +20,7 @@ public class SprovUIService {
 
     private String githubLastReleaseUrl = "https://github.com/sprov065/sprov-ui/releases/latest";
 
-    private String currentVersion = "2.7.0";
+    private String currentVersion = "2.8.0";
 
     private String lastVersion = currentVersion;
 

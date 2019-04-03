@@ -72,7 +72,7 @@ public class Exec {
             InputStream in = getInputStream();
             return IOUtils.toString(in);
         }
-        throw new IOException("wait timeout：" + command);
+        throw new IOException("wait timeout");
     }
 
     public int getExitValue() {

@@ -49,4 +49,12 @@ public class Config {
 
     public static String getBasePath() { return properties.getProperty("basePath", ""); }
 
+    public static void setApiPort(int port) {
+        properties.setProperty("apiPort", String.valueOf(port));
+    }
+
+    public static int getApiPort() {
+        return Integer.parseInt(properties.getProperty("apiPort", "-1"));
+    }
+
 }

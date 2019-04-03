@@ -58,6 +58,10 @@ public class SprovUISparkApp {
                 post("/add", inboundsRoute.add(), jsonTransformer);
                 post("/edit", inboundsRoute.edit(), jsonTransformer);
                 post("/del", inboundsRoute.del(), jsonTransformer);
+
+                post("/openTraffic", inboundsRoute.openTraffic(), jsonTransformer);
+                post("/resetTraffic", inboundsRoute.resetTraffic(), jsonTransformer);
+                post("/resetAllTraffic", inboundsRoute.resetAllTraffic(), jsonTransformer);
             });
         });
 
@@ -79,7 +83,7 @@ public class SprovUISparkApp {
 
         awaitInitialization();
         long end = System.currentTimeMillis();
-        System.out.println("sprov-ui启动成功，耗时" + (end - start) + " ms");
+        System.out.println("sprov-ui 启动成功，耗时 " + (end - start) + " ms，面板监听端口为 " + port);
     }
 
 }

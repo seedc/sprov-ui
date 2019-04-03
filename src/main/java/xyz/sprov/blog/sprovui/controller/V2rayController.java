@@ -1,10 +1,17 @@
 package xyz.sprov.blog.sprovui.controller;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayException;
+import xyz.sprov.blog.sprovui.service.ExtraConfigService;
 import xyz.sprov.blog.sprovui.service.V2rayConfigService;
 import xyz.sprov.blog.sprovui.service.V2rayService;
 import xyz.sprov.blog.sprovui.util.Context;
+
+import java.util.Iterator;
+import java.util.Map;
 
 //@Controller
 //@RequestMapping("v2ray")
@@ -15,6 +22,8 @@ public class V2rayController {
 
 //    @Autowired
     private V2rayConfigService configService = Context.v2rayConfigService;
+
+    private ExtraConfigService extraConfigService = Context.extraConfigService;
 
 //    @GetMapping("")
     public String index() {
@@ -174,9 +183,26 @@ public class V2rayController {
 //    @PostMapping("config")
     public Msg config() {
         try {
-            return new Msg(true, configService.config());
+            JSONObject config = configService.getConfig();
+            JSONArray inbounds = config.getJSONArray("inbounds");
+            Iterator<Object> iterator = inbounds.iterator();
+            Map<String, JSONObject> tagInboundMap = extraConfigService.getTagInboundMap();
+            while (iterator.hasNext()) {
+                JSONObject inbound = (JSONObject) iterator.next();
+                String tag = inbound.getString("tag");
+                if (StringUtils.isEmpty(tag)) {
+                    continue;
+                } else if ("api".equals(tag)) {
+                    iterator.remove();
+                }
+                JSONObject extraInbound = tagInboundMap.get(tag);
+                if (extraInbound != null) {
+                    inbound.putAll(extraInbound);
+                }
+            }
+            return new Msg(true, config.toJSONString());
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
             return new Msg(false, "获取配置文件内容失败：" + e.getMessage());
         }
     }

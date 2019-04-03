@@ -29,7 +29,10 @@ const defaultInbound = {
             certificates: [{certificateFile: '', keyFile: ''}],
         },
     },
-    tag: ''
+    tag: '',
+    remark: '',
+    downlink: 0,
+    uplink: 0
 };
 
 const defaultVmessSettings = {
@@ -138,7 +141,7 @@ let app = new Vue({
                 protocol: 'vmess',
                 listen: '0.0.0.0',
                 port: randomIntRange(10000, 60000),
-                tag: ''
+                remark: ''
             };
             this.vmess = {
                 id: randomUUID(),
@@ -187,7 +190,7 @@ let app = new Vue({
                 protocol: inbound.protocol,
                 listen: inbound.listen,
                 port: inbound.port,
-                tag: inbound.tag
+                remark: inbound.remark
             };
             if (inbound.protocol === 'vmess') {
                 this.vmess = {
@@ -327,7 +330,7 @@ let app = new Vue({
                 listen: isEmpty(form.listen) ? '0.0.0.0' : form.listen,
                 port: form.port,
                 protocol: form.protocol,
-                tag: form.tag,
+                remark: form.remark,
                 settings: JSON.stringify(settings),
                 streamSettings: JSON.stringify(streamSettings)
             };
@@ -388,6 +391,21 @@ let app = new Vue({
                 }
             });
         },
+        openTraffic: function(inbound) {
+            this.submit('/v2ray/inbound/openTraffic', { port: inbound.port });
+        },
+        resetTraffic: function(inbound) {
+            this.confirm('确定要重置该账号的流量吗？（不可恢复）', '')
+                .then(() => {
+                    this.submit('/v2ray/inbound/resetTraffic', { port: inbound.port });
+                });
+        },
+        resetAllTraffic: function() {
+            this.confirm('确定要重置所有账号的流量吗？（不可恢复）', '')
+                .then(() => {
+                    this.submit('/v2ray/inbound/resetAllTraffic');
+                });
+        },
         restart: function() {
             this.confirm('确定要重启吗？', '')
                 .then(() => {
@@ -402,6 +420,9 @@ let app = new Vue({
         },
         submit: function (url, form, dl) {
             this.btnLoad = true;
+            if (form === undefined || form === null) {
+                form = {};
+            }
             post({
                 url: url,
                 data: form,
@@ -464,16 +485,6 @@ let app = new Vue({
         showQrCode: function(str) {
             this.qrCodeDL.visible = true;
             this.$nextTick(() => {
-                // jquery('#qrcode').qrcode(str);
-                // if (this.qrCodeDL.qrcode === null) {
-                //     this.qrCodeDL.qrcode = new QRCode(document.getElementById('qrCode'), {
-                //         text: str,
-                //         correctLevel : QRCode.CorrectLevel.H
-                //     });
-                // } else {
-                //     this.qrCodeDL.qrcode.clear();
-                //     this.qrCodeDL.qrcode.makeCode(str);
-                // }
                 if (this.qrCodeDL.qrcode === null) {
                     this.qrCodeDL.qrcode = new QRious({
                         element: document.querySelector('#qrCode'),
@@ -512,7 +523,7 @@ let app = new Vue({
             }
             let obj = {
                 v: '2',
-                ps: inbound.tag,
+                ps: inbound.remark,
                 add: inbound.listen === '0.0.0.0' ? this.ip : inbound.listen,
                 port: inbound.port,
                 id: client.id,
