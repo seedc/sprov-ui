@@ -32,7 +32,8 @@ const defaultInbound = {
     tag: '',
     remark: '',
     downlink: 0,
-    uplink: 0
+    uplink: 0,
+    searched: true
 };
 
 const defaultVmessSettings = {
@@ -90,7 +91,9 @@ let app = new Vue({
         btnLoad: false,
         defaultActive: location.pathname + (!location.pathname.endsWith('/') ? '/' : ''),
         ip: location.hostname,
+        protocols: ['shadowsocks', 'dokodemo-door', 'mtproto', 'socks', 'http'],
         config: {},
+        search: '',
         inbounds: [],
         inDL: { visible: false, mode: 'add' },
         qrCodeDL: { visible: false, qrcode: null },
@@ -105,6 +108,8 @@ let app = new Vue({
         ss: {},
         doko: {},
         mt: {},
+        socks: {},
+        http: {},
         stream: {},
         kcp: {},
         ws: {},
@@ -160,6 +165,15 @@ let app = new Vue({
             };
             this.mt = {
                 secret: randomMTSecret()
+            };
+            this.socks = {
+                auth: 'password',
+                accounts: [{ user: '', pass: '' }],
+                udp: false,
+                ip: '127.0.0.1'
+            };
+            this.http = {
+                accounts: [{ user: '', pass: '' }]
             };
             this.stream = {
                 tls: false,
@@ -243,6 +257,19 @@ let app = new Vue({
                 this.mt = {
                     secret: inbound.settings.users[0].secret
                 };
+            } else if (inbound.protocol === 'socks') {
+                const settings = inbound.settings;
+                this.socks = {
+                    auth: settings.auth,
+                    accounts: isEmpty(settings.accounts) ? [] : deepClone(settings.accounts),
+                    udp: isEmpty(settings.udp) ? false : settings.udp,
+                    ip: isEmpty(settings.ip) ? '127.0.0.1' : settings.ip
+                };
+            } else if (inbound.protocol === 'http') {
+                const settings = inbound.settings;
+                this.http = {
+                    accounts: isEmpty(settings.accounts) ? [] : deepClone(settings.accounts)
+                };
             }
             this.inDL.mode = 'edit';
             this.inDL.visible = true;
@@ -325,6 +352,26 @@ let app = new Vue({
                         secret: mt.secret
                     }]
                 };
+            } else if (form.protocol === 'socks') {
+                const socks = deepClone(this.socks);
+                const accounts = [];
+                for (let i = 0; i < socks.accounts.length; ++i) {
+                    if (!isEmpty(socks.accounts[i].user)) {
+                        accounts.push(socks.accounts[i]);
+                    }
+                }
+                socks.accounts = accounts;
+                settings = socks;
+            } else if (form.protocol === 'http') {
+                const http = deepClone(this.http);
+                const accounts = [];
+                for (let i = 0; i < http.accounts.length; ++i) {
+                    if (!isEmpty(http.accounts[i].user)) {
+                        accounts.push(http.accounts[i]);
+                    }
+                }
+                http.accounts = accounts;
+                settings = http;
             }
             return {
                 listen: isEmpty(form.listen) ? '0.0.0.0' : form.listen,
@@ -367,6 +414,13 @@ let app = new Vue({
                 }
             });
         },
+        addOrEdit: function(form) {
+            if (this.inDL.mode === 'add') {
+                this.addInbound(form);
+            } else {
+                this.editInbound(form);
+            }
+        },
         addInbound: function (form) {
             this.validateForms(form, valid => {
                 if (valid) {
@@ -407,13 +461,13 @@ let app = new Vue({
                 });
         },
         restart: function() {
-            this.confirm('确定要重启吗？', '')
+            this.confirm('确定要重启 v2ray 吗？', '')
                 .then(() => {
                     this.submit('/v2ray/restart');
                 });
         },
         stop: function() {
-            this.confirm('确定要关闭吗？', '')
+            this.confirm('确定要关闭 v2ray 吗？', '')
                 .then(() => {
                     this.submit('/v2ray/stop');
                 });
@@ -557,6 +611,20 @@ let app = new Vue({
                 str = str.substring(0, str.length - split);
             }
             return str;
+        },
+        deepSearch: function (obj, value) {
+            if (typeof obj === 'string') {
+                return obj.indexOf(value) >= 0;
+            } else if (typeof obj === 'number') {
+                return obj.toString().indexOf(value) >= 0;
+            } else {
+                for (let k in obj) {
+                    if (this.deepSearch(obj[k], value)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
     },
     watch: {
@@ -565,6 +633,32 @@ let app = new Vue({
         },
         'stream.tls': function (tls) {
             this.stream.security = tls ? 'tls' : 'none';
+        },
+        'search': function (search) {
+            let inbounds = this.inbounds;
+            if (search !== '') {
+                for (let i = 0; i < inbounds.length; ++i) {
+                    inbounds[i].searched = this.deepSearch(inbounds[i], search);
+                }
+            } else {
+                for (let i = 0; i < inbounds.length; ++i) {
+                    inbounds[i].searched = true;
+                }
+            }
+        }
+    },
+    computed: {
+        'total': function () {
+            let up = 0, down = 0;
+            let inbounds = this.inbounds;
+            for (let i = 0; i < inbounds.length; ++i) {
+                up += inbounds[i].uplink;
+                down += inbounds[i].downlink;
+            }
+            return {
+                uplink: up,
+                downlink: down
+            }
         }
     },
     mounted: function () {

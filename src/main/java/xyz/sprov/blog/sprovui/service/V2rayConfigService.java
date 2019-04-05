@@ -328,6 +328,10 @@ public class V2rayConfigService {
         Config.setApiPort(apiPort);
         JSONObject routing = getRouting(config);
         JSONArray rules = routing.getJSONArray("rules");
+        if (rules == null) {
+            rules = new JSONArray();
+            routing.put("rules", rules);
+        }
         rules.removeIf(o -> {
             JSONObject rule = (JSONObject) o;
             return "api".equals(rule.getString("outboundTag"));

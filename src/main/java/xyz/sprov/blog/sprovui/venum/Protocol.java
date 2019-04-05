@@ -7,7 +7,9 @@ public enum Protocol {
     DOKODEMO_DOOR("dokodemo-door"), // 端口转发
     VMESS("vmess"), // VMess协议
     MT_PROTO("mtproto"), // Telegram代理
-    SHADOWSOCKS("shadowsocks"); // shadowsocks
+    SHADOWSOCKS("shadowsocks"), // shadowsocks
+    SOCKS("socks"), // socks 代理
+    HTTP("http"); // http 代理
 
     private static String[] protocolNames;
 

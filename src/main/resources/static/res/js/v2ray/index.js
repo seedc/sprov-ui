@@ -27,11 +27,16 @@ let app = new Vue({
         tableData: tableData,
         freshInterval: 1,
         lastVersion: '',
-        isLastVersion: true
+        isLastVersion: true,
+        refresh: true
     },
     methods: {
         menuSelect: function (index) { console.log(index); location.href = index; },
         freshStatus: function () {
+            if (!this.refresh) {
+                setTimeout('app.freshStatus()', this.freshInterval * 1000);
+                return;
+            }
             post({
                 url: '/server/status',
                 success: data => {
@@ -75,76 +80,92 @@ let app = new Vue({
             post({
                 url: '/sprov-ui/isLastVersion',
                 success: data => {
-                    this.isLastVersion = data.success;
-                    this.lastVersion = data.msg;
+                    if (data.success === false || data.success === true) {
+                        this.isLastVersion = data.success;
+                        this.lastVersion = data.msg;
+                    }
                 }
             });
         },
         restart: function () {
             this.confirm('确定要重启吗？', '')
-                .then(() => {
-                    post({
-                        url: '/sprov-ui/restart',
-                        success: data => {
-                            if (data.success) {
-                                this.message({
-                                    message: data.msg,
-                                    type: 'success'
-                                });
-                            } else {
-                                this.message({
-                                    message: data.msg,
-                                    type: 'error'
-                                });
-                            }
-                        },
-                        error: e => {
-                            this.message({
-                                message: '网络错误，请检查网络连接',
-                                type: 'error'
-                            });
-                        }
+                .then(this.restartPanel);
+        },
+        restartPanel: function() {
+            const loading = this.$loading({
+                lock: true,
+                text: '重启面板中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            });
+            this.refresh = false;
+            post({
+                url: '/sprov-ui/restart',
+                success: data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        this.message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                    loading.close();
+                    this.refresh = true;
+                },
+                error: e => {
+                    this.message({
+                        message: '网络错误，请检查网络连接',
+                        type: 'error'
                     });
-                });
+                    loading.close();
+                    this.refresh = true;
+                }
+            });
         },
         update: function () {
             this.confirm('确定要升级面板吗？', '')
-                .then(() => {
+                .then(this.updatePanel);
+        },
+        updatePanel: function () {
+            this.message({
+                message: '请耐心等待，升级可能需要花费几分钟',
+                type: 'warning'
+            });
+            const loading = this.$loading({
+                lock: true,
+                text: '面板升级中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            });
+            this.refresh = false;
+            post({
+                url: '/sprov-ui/update',
+                success: data => {
+                    if (data.success) {
+                        this.message({
+                            message: data.msg,
+                            type: 'success'
+                        });
+                        this.restartPanel();
+                    } else {
+                        this.message({
+                            message: data.msg,
+                            type: 'error'
+                        });
+                    }
+                    loading.close();
+                    this.refresh = true;
+                },
+                error: e => {
                     this.message({
-                        message: '请耐心等待，升级可能需要花费几分钟',
-                        type: 'warning'
+                        message: '网络错误，请检查网络连接',
+                        type: 'error'
                     });
-                    const loading = this.$loading({
-                        lock: true,
-                        text: '面板升级中...',
-                        spinner: 'el-icon-loading',
-                        background: 'rgba(0, 0, 0, 0.7)'
-                    });
-                    post({
-                        url: '/sprov-ui/update',
-                        success: data => {
-                            if (data.success) {
-                                this.message({
-                                    message: data.msg,
-                                    type: 'success'
-                                });
-                            } else {
-                                this.message({
-                                    message: data.msg,
-                                    type: 'error'
-                                });
-                            }
-                            loading.close();
-                        },
-                        error: e => {
-                            this.message({
-                                message: '网络错误，请检查网络连接',
-                                type: 'error'
-                            });
-                            loading.close();
-                        }
-                    });
-                });
+                    loading.close();
+                    this.refresh = true;
+                }
+            });
         }
     },
     mounted: function () {

@@ -177,7 +177,7 @@ public class ExtraConfigService {
                     writeConfig(config);
                 }
             } catch (Exception e) {
-                System.err.println("更新流量数据失败，请检查 v2ray 是否启动（若此消息未经常出现，请忽略）：" + e.getMessage());
+                System.err.println("更新流量数据失败，请检查 v2ray 是否启动（若此消息未经常出现，请忽略）：" + e);
             }
         }
 

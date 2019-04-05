@@ -12,6 +12,7 @@ public class HttpUtil {
         try {
             URL u = new URL(url);
             conn = (HttpURLConnection) u.openConnection();
+            conn.setConnectTimeout(10000);
             conn.connect();
             conn.getResponseCode();
             return conn.getURL().toString();

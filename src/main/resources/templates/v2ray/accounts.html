@@ -26,6 +26,10 @@
     .el-card + .el-card {
         margin-top: 10px;
     }
+
+    .search .el-input__inner {
+        border-radius: 10px;
+    }
 </style>
 
 <el-container id="app" v-cloak>
@@ -73,202 +77,39 @@
                 <el-button type="danger" size="mini"  style="margin-left: 0" @click="stop">关闭</el-button>
             </div>
             <div v-loading="loading">
-            <div v-for="inbound in inbounds" style="margin-top: 10px;">
-                <!-- vmess -->
-                <el-card v-if="inbound.protocol === 'vmess'"
-                         v-for="(client, index) in inbound.settings.clients">
-                    <div slot="header">
-                        <el-tag type="success">{{ inbound.protocol }}</el-tag>
-                        <el-button type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
-                        <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
-                        <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
-                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
-                    </div>
+                <el-card>
                     <el-row>
-                        <el-col :sm="12">
-                            <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="vmessLink(inbound, client)">复制vmess链接</el-button>
-                        </el-col>
-                        <el-col :sm="12">
-                            <el-button type="primary" size="mini" @click="showQrCode(vmessLink(inbound, client))">二维码</el-button>
+                        <el-col>
+                            <el-input class="search" v-model.trim="search" clearable placeholder="搜索"></el-input>
                         </el-col>
                     </el-row>
                     <el-row>
                         <el-col :sm="12">
-                            IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                            总上传/总下载：
+                            <el-tag>{{ sizeFormat(total.uplink) }} / {{ sizeFormat(total.downlink) }}</el-tag>
                         </el-col>
                         <el-col :sm="12">
-                            端口：<el-tag>{{ inbound.port }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col :sm="12">
-                            用户ID：<el-tag>{{ client.id }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            额外id（alterId）：<el-tag>{{ client.alterId }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row>
-                        <el-col :sm="12">
-                            加密：<el-tag>auto</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            传输协议：<el-tag>{{ inbound.streamSettings.network }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <!-- kcp -->
-                    <el-row v-if="inbound.streamSettings.network === 'kcp'">
-                        <el-col :sm="12">
-                            伪装类型：<el-tag>{{ inbound.streamSettings.kcpSettings.header.type }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            上行/下行链路容量：
-                            <el-tag>
-                                {{ inbound.streamSettings.kcpSettings.uplinkCapacity }} /
-                                {{ inbound.streamSettings.kcpSettings.downlinkCapacity }}
-                            </el-tag>
-                        </el-col>
-                    </el-row>
-                    <!-- ws -->
-                    <el-row v-if="inbound.streamSettings.network === 'ws'">
-                        <el-col :sm="12">
-                            路径：<el-tag>{{ inbound.streamSettings.wsSettings.path }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            HTTP 头：
-                            <span v-if="JSON.stringify(inbound.streamSettings.wsSettings.headers) === '{}'">无</span>
-                            <el-button v-else type="text" @click="showHeaders(inbound.streamSettings.wsSettings.headers)">查看</el-button>
-                        </el-col>
-                    </el-row>
-                    <el-row v-if="inbound.streamSettings.security === 'tls'">
-                        <el-col :sm="12">
-                            证书域名：<el-tag>{{ inbound.streamSettings.tlsSettings.serverName }}</el-tag>
-                        </el-col>
-                        <!--<el-col v-if="inbound.streamSettings.tlsSettings.certificates[0]" :sm="12">-->
-                            <!--证书，密钥：-->
-                            <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].certificateFile }}</el-tag>-->
-                            <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].keyFile }}</el-tag>-->
-                        <!--</el-col>-->
-                    </el-row>
-                    <el-row v-if="!isEmpty(inbound.tag) || !isEmpty(inbound.remark)">
-                        <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
-                            <el-tooltip>
-                                <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
-                                <i class="el-icon-warning"></i>
-                            </el-tooltip>
-                            tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
-                        </el-col>
-                        <el-col v-if="!isEmpty(inbound.remark)" :sm="12">
-                            备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
-                        </el-col>
-                    </el-row>
-                    <el-row v-if="!isEmpty(inbound.tag)">
-                        <el-col :sm="12">
-                            上传/下载：
-                            <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
+                            总流量：<el-tag>{{ sizeFormat(total.uplink + total.downlink) }}</el-tag>
                         </el-col>
                     </el-row>
                 </el-card>
-                <el-card v-if="inbound.protocol === 'shadowsocks'
-                                || inbound.protocol === 'dokodemo-door'
-                                || inbound.protocol === 'mtproto'">
-                    <div slot="header">
-                        <el-tag type="primary">{{ inbound.protocol }}</el-tag>
-                        <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
-                        <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
-                        <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
-                        <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
-                    </div>
-                    <!-- shadowsocks -->
-                    <template v-if="inbound.protocol === 'shadowsocks'">
+                <div v-for="inbound in inbounds" style="margin-top: 10px;">
+                    <!-- vmess -->
+                    <el-card v-if="inbound.searched && inbound.protocol === 'vmess'"
+                             v-for="(client, index) in inbound.settings.clients">
+                        <div slot="header">
+                            <el-tag type="success">{{ inbound.protocol }}</el-tag>
+                            <el-button type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
+                            <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
+                            <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                        </div>
                         <el-row>
                             <el-col :sm="12">
-                                <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="ssLink(inbound)">复制ss链接</el-button>
-                            </el-col>
-                                <el-button type="primary" size="mini" @click="showQrCode(ssLink(inbound))">二维码</el-button>
-                            </el-col>
-                        </el-row>
-                        <el-row>
-                            <el-col :sm="12">
-                                IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                                <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="vmessLink(inbound, client)">复制vmess链接</el-button>
                             </el-col>
                             <el-col :sm="12">
-                                端口：<el-tag>{{ inbound.port }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row>
-                            <el-col :sm="12">
-                                加密：<el-tag>{{ inbound.settings.method }}</el-tag>
-                            </el-col>
-                            <el-col :sm="12">
-                                密码：<el-tag>{{ inbound.settings.password }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row>
-                            <el-col :sm="12">
-                                网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
-                            </el-col>
-                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
-                                <el-tooltip>
-                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
-                                    <i class="el-icon-warning"></i>
-                                </el-tooltip>
-                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row v-if="!isEmpty(inbound.remark)">
-                            <el-col :sm="12">
-                                备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
-                            </el-col>
-                        </el-row>
-                    </template>
-                    <!-- dokodemo-door -->
-                    <template v-if="inbound.protocol === 'dokodemo-door'">
-                        <el-row>
-                            <el-col :sm="12">
-                                IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
-                            </el-col>
-                            <el-col :sm="12">
-                                端口：<el-tag>{{ inbound.port }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row>
-                            <el-col :sm="12">
-                                转发的地址：<el-tag>{{ inbound.settings.address }}</el-tag>
-                            </el-col>
-                            <el-col :sm="12">
-                                转发的端口：<el-tag>{{ inbound.settings.port }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row>
-                            <el-col :sm="12">
-                                转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
-                            </el-col>
-                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
-                                <el-tooltip>
-                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
-                                    <i class="el-icon-warning"></i>
-                                </el-tooltip>
-                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
-                            </el-col>
-                        </el-row>
-                        <el-row v-if="!isEmpty(inbound.remark)">
-                            <el-col :sm="12">
-                                备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
-                            </el-col>
-                        </el-row>
-                    </template>
-                    <!-- mtproto -->
-                    <template v-if="inbound.protocol === 'mtproto'">
-                        <el-row>
-                            <el-col :sm="12">
-                                <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="mtLink(inbound)">复制链接</el-button>
-                            </el-col>
-                            <el-col :sm="12">
-                                <el-button type="primary" size="mini" @click="window.open(mtLink(inbound))">直接打开</el-button>
+                                <el-button type="primary" size="mini" @click="showQrCode(vmessLink(inbound, client))">二维码</el-button>
                             </el-col>
                         </el-row>
                         <el-row>
@@ -281,33 +122,215 @@
                         </el-row>
                         <el-row>
                             <el-col :sm="12">
-                                密钥：<el-tag>{{ inbound.settings.users[0].secret }}</el-tag>
+                                用户ID：<el-tag>{{ client.id }}</el-tag>
                             </el-col>
-                            <el-col v-if="!isEmpty(inbound.tag)" :sm="12">
-                                <el-tooltip>
-                                    <div slot="content">因流量统计需要，tag标识现已不可更改，并且在后续版本中将不再显示，请使用【备注】选项</div>
-                                    <i class="el-icon-warning"></i>
-                                </el-tooltip>
-                                tag标识：<el-tag type="success">{{ inbound.tag }}</el-tag>
+                            <el-col :sm="12">
+                                额外id（alterId）：<el-tag>{{ client.alterId }}</el-tag>
                             </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :sm="12">
+                                加密：<el-tag>auto</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                传输协议：<el-tag>{{ inbound.streamSettings.network }}</el-tag>
+                            </el-col>
+                        </el-row>
+                        <!-- kcp -->
+                        <el-row v-if="inbound.streamSettings.network === 'kcp'">
+                            <el-col :sm="12">
+                                伪装类型：<el-tag>{{ inbound.streamSettings.kcpSettings.header.type }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                上行/下行链路容量：
+                                <el-tag>
+                                    {{ inbound.streamSettings.kcpSettings.uplinkCapacity }} /
+                                    {{ inbound.streamSettings.kcpSettings.downlinkCapacity }}
+                                </el-tag>
+                            </el-col>
+                        </el-row>
+                        <!-- ws -->
+                        <el-row v-if="inbound.streamSettings.network === 'ws'">
+                            <el-col :sm="12">
+                                路径：<el-tag>{{ inbound.streamSettings.wsSettings.path }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                HTTP 头：
+                                <span v-if="JSON.stringify(inbound.streamSettings.wsSettings.headers) === '{}'">无</span>
+                                <el-button v-else type="text" @click="showHeaders(inbound.streamSettings.wsSettings.headers)">查看</el-button>
+                            </el-col>
+                        </el-row>
+                        <el-row v-if="inbound.streamSettings.security === 'tls'">
+                            <el-col :sm="12">
+                                证书域名：<el-tag>{{ inbound.streamSettings.tlsSettings.serverName }}</el-tag>
+                            </el-col>
+                            <!--<el-col v-if="inbound.streamSettings.tlsSettings.certificates[0]" :sm="12">-->
+                                <!--证书，密钥：-->
+                                <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].certificateFile }}</el-tag>-->
+                                <!--<el-tag>{{ inbound.streamSettings.tlsSettings.certificates[0].keyFile }}</el-tag>-->
+                            <!--</el-col>-->
                         </el-row>
                         <el-row v-if="!isEmpty(inbound.remark)">
                             <el-col :sm="12">
                                 备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
                             </el-col>
                         </el-row>
-                    </template>
-                    <el-row v-if="!isEmpty(inbound.tag)">
-                        <el-col :sm="12">
-                            上传/下载：
-                            <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
-                        </el-col>
-                        <el-col :sm="12">
-                            总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
-                        </el-col>
-                    </el-row>
-                </el-card>
-            </div>
+                        <el-row v-if="!isEmpty(inbound.tag)">
+                            <el-col :sm="12">
+                                上传/下载：
+                                <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </el-card>
+                    <!-- other -->
+                    <el-card v-if="inbound.searched && protocols.indexOf(inbound.protocol) >= 0">
+                        <div slot="header">
+                            <el-tag type="primary">{{ inbound.protocol }}</el-tag>
+                            <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
+                            <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
+                            <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                        </div>
+                        <!-- shadowsocks -->
+                        <template v-if="inbound.protocol === 'shadowsocks'">
+                            <el-row>
+                                <el-col :sm="12">
+                                    <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="ssLink(inbound)">复制ss链接</el-button>
+                                </el-col>
+                                <el-col :sm="12">
+                                    <el-button type="primary" size="mini" @click="showQrCode(ssLink(inbound))">二维码</el-button>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    端口：<el-tag>{{ inbound.port }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    加密：<el-tag>{{ inbound.settings.method }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    密码：<el-tag>{{ inbound.settings.password }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    网络：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                                </el-col>
+                                <el-col v-if="!isEmpty(inbound.remark)" :sm="12">
+                                    备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                                </el-col>
+                            </el-row>
+                        </template>
+                        <!-- dokodemo-door -->
+                        <template v-if="inbound.protocol === 'dokodemo-door'">
+                            <el-row>
+                                <el-col :sm="12">
+                                    IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    端口：<el-tag>{{ inbound.port }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    转发的地址：<el-tag>{{ inbound.settings.address }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    转发的端口：<el-tag>{{ inbound.settings.port }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    转发的底层协议：<el-tag>{{ inbound.settings.network ? inbound.settings.network : 'tcp' }}</el-tag>
+                                </el-col>
+                                <el-col v-if="!isEmpty(inbound.remark)" :sm="12">
+                                    备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                                </el-col>
+                            </el-row>
+                        </template>
+                        <!-- mtproto -->
+                        <template v-if="inbound.protocol === 'mtproto'">
+                            <el-row>
+                                <el-col :sm="12">
+                                    <el-button class="clipboard" type="primary" size="mini" :data-clipboard-text="mtLink(inbound)">复制链接</el-button>
+                                </el-col>
+                                <el-col :sm="12">
+                                    <el-button type="primary" size="mini" @click="window.open(mtLink(inbound))">直接打开</el-button>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    端口：<el-tag>{{ inbound.port }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row>
+                                <el-col :sm="12">
+                                    密钥：<el-tag>{{ inbound.settings.users[0].secret }}</el-tag>
+                                </el-col>
+                                <el-col v-if="!isEmpty(inbound.remark)" :sm="12">
+                                    备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                                </el-col>
+                            </el-row>
+                        </template>
+                        <!-- socks and http -->
+                        <template v-if="inbound.protocol === 'socks' || inbound.protocol === 'http'">
+                            <el-row>
+                                <el-col :sm="12">
+                                    IP：<el-tag>{{ inbound.listen === '0.0.0.0' ? ip : inbound.listen }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    端口：<el-tag>{{ inbound.port }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row v-if="inbound.protocol === 'socks'">
+                                <el-col :sm="12">
+                                    <el-tooltip v-if="inbound.settings.auth === 'password' && inbound.settings.accounts.length === 0">
+                                        <div slot="content">使用了密码认证但是未设置用户名和密码，将导致无法连接</div>
+                                        <i class="el-icon-warning"></i>
+                                    </el-tooltip>
+                                    认证：<el-tag>{{ inbound.settings.auth === 'password' ? '密码认证' : '无' }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    udp：<el-tag>{{ inbound.settings.udp ? '开启' : '关闭' }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row v-if="(inbound.protocol === 'socks' && inbound.settings.auth === 'password')
+                                         || inbound.protocol === 'http'" v-for="(account, index) in inbound.settings.accounts">
+                                <el-col :sm="12">
+                                    用户名 {{ index + 1 }}：<el-tag>{{ account.user }}</el-tag>
+                                </el-col>
+                                <el-col :sm="12">
+                                    密码 {{ index + 1 }}：<el-tag>{{ account.pass }}</el-tag>
+                                </el-col>
+                            </el-row>
+                            <el-row v-if="!isEmpty(inbound.remark)">
+                                <el-col :sm="12">
+                                    备注：<el-tag type="success">{{ inbound.remark }}</el-tag>
+                                </el-col>
+                            </el-row>
+                        </template>
+                        <el-row v-if="!isEmpty(inbound.tag)">
+                            <el-col :sm="12">
+                                上传/下载：
+                                <el-tag>{{ sizeFormat(inbound.uplink) }} / {{ sizeFormat(inbound.downlink) }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                总流量：<el-tag>{{ sizeFormat(inbound.uplink + inbound.downlink) }}</el-tag>
+                            </el-col>
+                        </el-row>
+                    </el-card>
+                </div>
             </div>
         </el-card>
     </el-main>
@@ -325,6 +348,8 @@
                     <el-option label="shadowsocks" value="shadowsocks"></el-option>
                     <el-option label="dokodemo-door（端口转发）" value="dokodemo-door"></el-option>
                     <el-option label="mtproto（telegram代理）" value="mtproto"></el-option>
+                    <el-option label="socks（socks代理）" value="socks"></el-option>
+                    <el-option label="http（http代理）" value="http"></el-option>
                 </el-select>
             </el-form-item>
             <el-form-item>
@@ -334,7 +359,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model="form.listen"></el-input>
+                <el-input v-model.trim="form.listen" clearable></el-input>
             </el-form-item>
             <el-form-item prop="port">
                 <template slot="label">
@@ -357,7 +382,7 @@
                 <el-input v-model="vmess.id" disabled></el-input>
             </el-form-item>
             <el-form-item label="额外id（alterId）" prop="alterId">
-                <el-input type="number" v-model.number="vmess.alterId"></el-input>
+                <el-input type="number" v-model.number="vmess.alterId" clearable></el-input>
             </el-form-item>
         </el-form>
         <!-- shadowsocks 协议 -->
@@ -381,7 +406,7 @@
                     密码
                     <el-button type="text" size="mini" @click="ss.password = randomSeq(10)">随机生成</el-button>
                 </template>
-                <el-input v-model.trim="ss.password"></el-input>
+                <el-input v-model.trim="ss.password" clearable></el-input>
             </el-form-item>
             <el-form-item label="网络">
                 <el-select v-model="ss.network">
@@ -403,10 +428,10 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model.trim="doko.address"></el-input>
+                <el-input v-model.trim="doko.address" clearable></el-input>
             </el-form-item>
             <el-form-item label="目标端口" prop="port">
-                <el-input type="number" v-model.number="doko.port"></el-input>
+                <el-input type="number" v-model.number="doko.port" clearable></el-input>
             </el-form-item>
             <el-form-item label="底层协议">
                 <el-select v-model="doko.network">
@@ -426,6 +451,83 @@
                     <el-button type="text" size="mini" @click="mt.secret = randomMTSecret()">重新生成</el-button>
                 </template>
                 <el-input :disabled="true" v-model="mt.secret"></el-input>
+            </el-form-item>
+        </el-form>
+        <!-- socks 协议 -->
+        <el-form v-if="form.protocol === 'socks'"
+                 size="small"
+                 label-position="top">
+            <el-form-item label="认证方式">
+                <el-switch v-model="socks.auth"
+                           active-text="密码认证" inactive-text="无认证"
+                           active-value="password" inactive-value="noauth"></el-switch>
+            </el-form-item>
+            <el-form-item v-if="socks.auth === 'password'">
+                <template slot="label">
+                    认证账号
+                    <el-tooltip content="socks 认证账号，可添加多个，每一行对应一组用户名和密码，必填用户名，无账号则无法连接">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-row v-for="(account, index) in socks.accounts" type="flex" justify="space-around">
+                    <el-col :span="10">
+                        <el-input v-model.trim="account.user" placeholder="用户名" clearable></el-input>
+                    </el-col>
+                    <el-col :span="10">
+                        <el-input v-model.trim="account.pass" placeholder="密码" clearable></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-button v-if="index > 0 && index === socks.accounts.length - 1" type="text" size="mini" icon="el-icon-minus" @click="socks.accounts.splice(index, 1)"></el-button>
+                    </el-col>
+                </el-row>
+                <el-row>
+                    <el-button type="success" size="mini" icon="el-icon-plus" @click="socks.accounts.push({ user: '', pass: '' })"></el-button>
+                </el-row>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    开启 udp
+                    <el-tooltip content="是否开启 UDP 协议的支持">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-switch v-model="socks.udp"></el-switch>
+            </el-form-item>
+            <el-form-item v-if="socks.udp">
+                <template slot="label">
+                    IP
+                    <el-tooltip content="当开启 UDP 时，V2Ray 需要知道本机的 IP 地址。默认值为 127.0.0.1">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="socks.ip" clearable></el-input>
+            </el-form-item>
+        </el-form>
+        <!-- http 协议 -->
+        <el-form v-if="form.protocol === 'http'"
+                 size="small"
+                 label-position="top">
+            <el-form-item>
+                <template slot="label">
+                    认证账号
+                    <el-tooltip content="http 认证账号，可添加多个，每一行对应一组用户名和密码，必填用户名，无账号则不进行认证">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-row v-for="(account, index) in http.accounts" type="flex" justify="space-around">
+                    <el-col :span="10">
+                        <el-input v-model.trim="account.user" placeholder="用户名" clearable></el-input>
+                    </el-col>
+                    <el-col :span="10">
+                        <el-input v-model.trim="account.pass" placeholder="密码" clearable></el-input>
+                    </el-col>
+                    <el-col :span="2">
+                        <el-button type="text" size="mini" icon="el-icon-minus" @click="http.accounts.splice(index, 1)"></el-button>
+                    </el-col>
+                </el-row>
+                <el-row>
+                    <el-button type="success" size="mini" icon="el-icon-plus" @click="http.accounts.push({ user: '', pass: '' })"></el-button>
+                </el-row>
             </el-form-item>
         </el-form>
         <!-- streamSettings -->
@@ -473,7 +575,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input type="number" v-model.number="kcp.uplinkCapacity"></el-input>
+                <el-input type="number" v-model.number="kcp.uplinkCapacity" clearable></el-input>
             </el-form-item>
             <el-form-item prop="downlinkCapacity">
                 <template slot="label">
@@ -482,7 +584,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input type="number" v-model.number="kcp.downlinkCapacity"></el-input>
+                <el-input type="number" v-model.number="kcp.downlinkCapacity" clearable></el-input>
             </el-form-item>
         </el-form>
         <!-- ws Settings -->
@@ -497,7 +599,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model.trim="ws.path"></el-input>
+                <el-input v-model.trim="ws.path" clearable></el-input>
             </el-form-item>
             <el-form-item>
                 <template slot="label">
@@ -511,13 +613,13 @@
                         键
                     </el-col>
                     <el-col :span="6">
-                        <el-input v-model.trim="header.name"></el-input>
+                        <el-input v-model.trim="header.name" clearable></el-input>
                     </el-col>
                     <el-col :span="2">
                         值
                     </el-col>
                     <el-col :span="12">
-                        <el-input v-model.trim="header.value"></el-input>
+                        <el-input v-model.trim="header.value" clearable></el-input>
                     </el-col>
                     <el-col :span="2">
                         <el-button v-if="index > 0 && index === ws.headers.length - 1" type="text" size="mini" icon="el-icon-minus" @click="ws.headers.splice(index, 1)"></el-button>
@@ -547,7 +649,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model.trim="tls.serverName"></el-input>
+                <el-input v-model.trim="tls.serverName" clearable></el-input>
             </el-form-item>
             <el-form-item>
                 <template slot="label">
@@ -556,7 +658,7 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model.trim="tls.certFile"></el-input>
+                <el-input v-model.trim="tls.certFile" clearable></el-input>
             </el-form-item>
             <el-form-item>
                 <template slot="label">
@@ -565,13 +667,13 @@
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
-                <el-input v-model.trim="tls.keyFile"></el-input>
+                <el-input v-model.trim="tls.keyFile" clearable></el-input>
             </el-form-item>
         </el-form>
         <!-- 其它 -->
-        <el-form v-if="form.protocol !== 'mtproto'" size="small" label-position="top">
+        <el-form size="small" label-position="top">
             <el-form-item label="备注（可选）">
-                <el-input v-model.trim="form.remark"></el-input>
+                <el-input v-model.trim="form.remark" clearable></el-input>
             </el-form-item>
         </el-form>
         <el-form size="small" label-position="top">
@@ -597,7 +699,7 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.8.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.9.0"></script>
 
 </body>
 </html>
