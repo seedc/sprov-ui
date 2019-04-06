@@ -8,10 +8,12 @@
  - 流量统计（支持所有协议）
  
 ## 支持的 v2ray 协议
- - vmess
- - shadowsocks
- - mtproto
- - dokodemo-door
+ - vmess（v2ray 特色）
+ - shadowsocks（经典 ss）
+ - mtproto（Telegram 专用）
+ - dokodemo-door（端口转发）
+ - socks（socks 4、socks 4a、socks 5）
+ - http（http 代理）
 
 ## 支持的 vmess 传输配置
  - tcp
