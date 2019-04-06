@@ -26,6 +26,7 @@ public class Context {
     public static final V2rayConfigService v2rayConfigService = new V2rayConfigService();
     public static final ServerService serverService = new ServerService();
     public static final SprovUIService sprovUIService = new SprovUIService();
+    public static final ReportService reportService = new ReportService();
 
     public static final V2rayController v2rayController = new V2rayController();
     public static final InboundsController inboundsController = new InboundsController();
