@@ -48,5 +48,5 @@ https://blog.sprov.xyz/2019/02/09/sprov-ui/
 # Telegram 群组
 https://t.me/sprov_blog
 
-# Telegram 更新通知频道
+# Telegram 频道
 https://t.me/sprov_channel
