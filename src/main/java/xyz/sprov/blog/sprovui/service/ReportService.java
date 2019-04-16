@@ -40,9 +40,7 @@ public class ReportService {
                     map.put(protocol, n + 1);
                 }
                 HttpUtil.post(reportUrl, map);
-            } catch (Exception ignore) {
-                ignore.printStackTrace();
-            }
+            } catch (Exception ignore) {}
         }
     }
 

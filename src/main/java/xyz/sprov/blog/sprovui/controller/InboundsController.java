@@ -6,6 +6,7 @@ import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
 import xyz.sprov.blog.sprovui.service.ExtraConfigService;
 import xyz.sprov.blog.sprovui.service.V2rayConfigService;
+import xyz.sprov.blog.sprovui.service.V2rayService;
 import xyz.sprov.blog.sprovui.util.Context;
 
 import java.io.IOException;
@@ -18,6 +19,8 @@ public class InboundsController {
     private V2rayConfigService configService = Context.v2rayConfigService;
 
     private ExtraConfigService extraConfigService = Context.extraConfigService;
+
+    private V2rayService v2rayService = Context.v2rayService;
 
     private JSONObject getInbound(String listen,
                                   int port,
@@ -169,6 +172,113 @@ public class InboundsController {
         } catch (Exception e) {
             e.printStackTrace();
             return new Msg(false, "操作失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 启用 inbound
+     */
+    public Msg enable(int port) {
+        JSONObject inbound;
+        try {
+            // 从删除 disabled 列表删除 inbound
+            inbound = extraConfigService.delDisabledInbound(port);
+            if (inbound == null) {
+                return new Msg(false, "端口为 " + port + " 的 inbound 不存在");
+            }
+        } catch (Exception e) {
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+        try {
+            // 添加流量配置文件
+            String tag = inbound.getString("tag");
+            if (!StringUtils.isEmpty(tag)) {
+                Long down = inbound.getLong("downlink");
+                Long up = inbound.getLong("uplink");
+                extraConfigService.addInbound(tag, down, up);
+            }
+        } catch (Exception e) {
+            try {
+                extraConfigService.addDisabledInbound(inbound);
+            } catch (Exception ignore) {}
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+        try {
+            // 添加 v2ray 配置文件
+            inbound.remove("downlink");
+            inbound.remove("uplink");
+            configService.addInbound(inbound, false);
+        } catch (Exception e) {
+            try {
+                extraConfigService.addDisabledInbound(inbound);
+            } catch (Exception ignore) {}
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+        try {
+            v2rayService.restart();
+            return new Msg(true, "操作成功，已自动重启 v2ray");
+        } catch (Exception e) {
+            return new Msg(false, "操作成功，但是重启 v2ray 失败，请手动重启");
+        }
+    }
+
+    /**
+     * 禁用 inbound
+     */
+    public Msg disable(int port) {
+        JSONObject inbound;
+        try {
+            // 获取 inbound
+            inbound = configService.getInbound(port);
+            if (inbound == null) {
+                return new Msg(false, "端口为 " + port + " 的 inbound 不存在");
+            }
+            String tag = inbound.getString("tag");
+            JSONObject extraInbound = extraConfigService.getInboundByTag(tag);
+            if (extraInbound != null) {
+                inbound.putAll(extraInbound);
+            }
+        } catch (Exception e) {
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+        try {
+            // 从 v2ray 配置文件中删除
+            configService.delInbound(port);
+        } catch (Exception e) {
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+
+        try {
+            // 添加进 disabled 列表
+            extraConfigService.addDisabledInbound(inbound);
+        } catch (Exception e) {
+            try {
+                inbound.remove("downlink");
+                inbound.remove("uplink");
+                configService.addInbound(inbound, false);
+            } catch (Exception ignore) {}
+            return new Msg(false, "操作失败：" + e.getMessage());
+        }
+
+        try {
+            v2rayService.restart();
+            return new Msg(true, "操作成功，已自动重启 v2ray");
+        } catch (Exception e) {
+            return new Msg(false, "操作成功，但是重启 v2ray 失败，请手动重启");
+        }
+    }
+
+    /**
+     * 删除已禁用的账号
+     */
+    public Msg delDisabled(int port) {
+        try {
+            if (extraConfigService.delDisabledInbound(port) == null) {
+                return new Msg(false, "端口 " + port + " 不存在");
+            }
+            return new Msg(true, "删除成功，此操作无需重启");
+        } catch (IOException e) {
+            return new Msg(false, "删除失败：" + e.getMessage());
         }
     }
 

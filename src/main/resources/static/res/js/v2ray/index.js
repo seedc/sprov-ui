@@ -80,8 +80,8 @@ let app = new Vue({
             post({
                 url: '/sprov-ui/isLastVersion',
                 success: data => {
-                    if (data.success === false || data.success === true) {
-                        this.isLastVersion = data.success;
+                    if (data.success === true) {
+                        this.isLastVersion = data.msg === data.obj;
                         this.lastVersion = data.msg;
                     }
                 }
@@ -103,7 +103,14 @@ let app = new Vue({
                 url: '/sprov-ui/restart',
                 success: data => {
                     if (data.success) {
-                        location.reload();
+                        this.message({
+                            message: '重启成功，将在 5 秒后刷新页面',
+                            type: 'success',
+                            duration: 5000
+                        });
+                        setTimeout(() => {
+                            location.reload();
+                        }, 5000);
                     } else {
                         this.message({
                             message: data.msg,

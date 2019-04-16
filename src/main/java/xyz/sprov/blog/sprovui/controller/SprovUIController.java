@@ -11,7 +11,7 @@ public class SprovUIController {
     private SprovUIService service = Context.sprovUIService;
 
     public Route isLastVersion() {
-        return (request, response) -> new Msg(service.isLastVersion(), service.lastVersion());
+        return (request, response) -> new Msg(true, service.lastVersion(), service.getCurrentVersion());
     }
 
     public Route update() {

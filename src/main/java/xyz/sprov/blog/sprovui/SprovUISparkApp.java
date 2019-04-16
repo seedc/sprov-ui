@@ -12,10 +12,9 @@ public class SprovUISparkApp {
         System.setProperty("file.encoding", "UTF-8");
     }
 
-    private static int port = Config.getPort();
-
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
+        int port  = Config.getPort();
         port(port);
         threadPool(4, 1, 60000);
 
@@ -24,7 +23,7 @@ public class SprovUISparkApp {
             System.exit(1);
         });
 
-        exception(Exception.class, (exception, request, response) -> System.out.println(exception.getMessage()));
+        exception(Exception.class, (e, request, response) -> System.out.println(e.getMessage()));
 
         staticFiles.location("/static");
         staticFiles.expireTime(3600 * 24 * 30 * 6);
@@ -62,6 +61,10 @@ public class SprovUISparkApp {
                 post("/openTraffic", inboundsRoute.openTraffic(), jsonTransformer);
                 post("/resetTraffic", inboundsRoute.resetTraffic(), jsonTransformer);
                 post("/resetAllTraffic", inboundsRoute.resetAllTraffic(), jsonTransformer);
+
+                post("/enable", inboundsRoute.enable(), jsonTransformer);
+                post("/disable", inboundsRoute.disable(), jsonTransformer);
+                post("/delDisabled", inboundsRoute.delDisabled(), jsonTransformer);
             });
         });
 
@@ -80,7 +83,6 @@ public class SprovUISparkApp {
             post("/update", sprovUIController.update(), jsonTransformer);
             post("/restart", sprovUIController.restart(), jsonTransformer);
         });
-
         awaitInitialization();
         long end = System.currentTimeMillis();
         System.out.println("sprov-ui 启动成功，耗时 " + (end - start) + " ms，面板监听端口为 " + port);

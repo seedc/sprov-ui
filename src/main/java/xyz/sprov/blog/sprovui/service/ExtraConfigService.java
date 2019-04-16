@@ -11,6 +11,7 @@ import xyz.sprov.blog.sprovui.util.V2ctlUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -123,10 +124,80 @@ public class ExtraConfigService {
         }
     }
 
-    public void addInboundTraffic(String tag, long down, long up) {
+    public JSONArray getDisabledInbounds() {
+        JSONArray inbounds = config.getJSONArray("disabled-inbounds");
+        if (inbounds == null) {
+            inbounds = new JSONArray();
+            config.put("disabled-inbounds", inbounds);
+        }
+        return inbounds;
+    }
+
+    public void addDisabledInbound(JSONObject inbound) throws IOException {
+        JSONArray inbounds = getDisabledInbounds();
+        inbounds.add(inbound);
+        writeConfig(config);
+    }
+
+    public JSONObject delDisabledInbound(int port) throws IOException {
+        JSONArray inbounds = getDisabledInbounds();
+        Iterator<Object> iterator = inbounds.iterator();
+        while (iterator.hasNext()) {
+            JSONObject inbound  = (JSONObject) iterator.next();
+            if (port == inbound.getIntValue("port")) {
+                iterator.remove();
+                writeConfig(config);
+                return inbound;
+            }
+        }
+        return null;
+    }
+
+    public void removeDisabledInbound(String tag) throws IOException {
+        JSONArray inbounds = getDisabledInbounds();
+        boolean removed = inbounds.removeIf(obj -> {
+            JSONObject inbound = (JSONObject) obj;
+            return inbound.getString("tag").equals(tag);
+        });
+        if (removed) {
+            writeConfig(config);
+        }
+    }
+
+    public void addInbound(InboundTraffic inboundTraffic) {
+        JSONObject inbound = JSONObject.parseObject(JSONObject.toJSONString(inboundTraffic));
+        getInbounds().add(inbound);
+    }
+
+    public void addInbound(String tag, Long downlink, Long uplink) {
+        if (StringUtils.isEmpty(tag)) {
+            throw new IllegalArgumentException("tag 不能为空");
+        }
+        if (downlink == null) {
+            downlink = 0L;
+        }
+        if (uplink == null) {
+            uplink = 0L;
+        }
+        InboundTraffic inboundTraffic = new InboundTraffic();
+        inboundTraffic.setTag(tag);
+        inboundTraffic.setDownlink(downlink);
+        inboundTraffic.setUplink(uplink);
+        addInbound(inboundTraffic);
+    }
+
+    public void addInboundTraffic(String tag, Long down, Long up) {
+        if (down == null) {
+            down = 0L;
+        }
+        if (up == null) {
+            up = 0L;
+        }
         JSONObject inbound = getInboundByTag(tag);
         if (inbound == null) {
-            throw new RuntimeException("tag 标识为 <" + tag + "> 的 inbound 不存在");
+            inbound = JSONObject.parseObject("{}");
+            JSONArray inbounds = getInbounds();
+            inbounds.add(inbound);
         }
         addInboundTraffic(inbound, down, up);
     }

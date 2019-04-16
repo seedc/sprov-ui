@@ -43,7 +43,7 @@
         </el-dropdown>
     </el-header>
     <el-main>
-        <el-row v-if="!isLastVersion" style="margin-bottom: 10px">
+        <el-row v-if="isLastVersion === false" style="margin-bottom: 10px">
             <el-col>
                 <el-alert :title="'发现面板新版本：' + lastVersion + '，查看升级内容：https://github.com/sprov065/sprov-ui/releases'" type="success" :closable="false"></el-alert>
             </el-col>
@@ -88,6 +88,6 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/index.js?v=2.9.0"></script>
+<script src="/res/js/v2ray/index.js?v=2.10.0"></script>
 </body>
 </html>

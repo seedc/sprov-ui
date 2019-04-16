@@ -71,10 +71,10 @@
         </el-row>
         <el-card>
             <div slot="header">
-                <el-button type="success" size="mini"  style="margin-left: 0" @click="openAdd">添加</el-button>
-                <el-button type="primary" size="mini"  style="margin-left: 0" @click="restart">重启</el-button>
-                <el-button type="warning" size="mini"  style="margin-left: 0" @click="resetAllTraffic">重置</el-button>
-                <el-button type="danger" size="mini"  style="margin-left: 0" @click="stop">关闭</el-button>
+                <el-button type="success" size="mini" style="margin-left: 0" @click="openAdd">添加</el-button>
+                <el-button type="primary" size="mini" style="margin-left: 0" @click="restart">重启</el-button>
+                <el-button type="warning" size="mini" style="margin-left: 0" @click="resetAllTraffic">重置</el-button>
+                <el-button type="danger" size="mini" style="margin-left: 0" @click="stop">关闭</el-button>
             </div>
             <div v-loading="loading">
                 <el-card>
@@ -99,10 +99,13 @@
                              v-for="(client, index) in inbound.settings.clients">
                         <div slot="header">
                             <el-tag type="success">{{ inbound.protocol }}</el-tag>
-                            <el-button type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
-                            <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
-                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
-                            <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                            <el-button v-if="inbound.enable" type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
+                            <el-button v-if="inbound.enable" type="danger" size="mini" style="margin-left: 0" @click="disable(inbound)">禁用</el-button>
+                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="enable(inbound)">启用</el-button>
+                            <el-button v-if="inbound.enable && !isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                            <el-button v-else-if="inbound.enable" type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
+                            <el-button v-if="inbound.enable" type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                            <el-button v-else type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="delDisabled(inbound)"></el-button>
                         </div>
                         <el-row>
                             <el-col :sm="12">
@@ -188,11 +191,14 @@
                     <!-- other -->
                     <el-card v-if="inbound.searched && protocols.indexOf(inbound.protocol) >= 0">
                         <div slot="header">
-                            <el-tag type="primary">{{ inbound.protocol }}</el-tag>
-                            <el-button type="success" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
-                            <el-button v-if="!isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
-                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
-                            <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                            <el-tag type="success">{{ inbound.protocol }}</el-tag>
+                            <el-button v-if="inbound.enable" type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound)"></el-button>
+                            <el-button v-if="inbound.enable" type="danger" size="mini" style="margin-left: 0" @click="disable(inbound)">禁用</el-button>
+                            <el-button v-else type="success" size="mini" style="margin-left: 0" @click="enable(inbound)">启用</el-button>
+                            <el-button v-if="inbound.enable && !isEmpty(inbound.tag)" type="warning" size="mini" style="margin-left: 0" @click="resetTraffic(inbound)">重置</el-button>
+                            <el-button v-else-if="inbound.enable" type="success" size="mini" style="margin-left: 0" @click="openTraffic(inbound)">开启流量统计</el-button>
+                            <el-button v-if="inbound.enable" type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="del(inbound)"></el-button>
+                            <el-button v-else type="danger" size="mini" icon="el-icon-delete" style="margin-left: 0" @click="delDisabled(inbound)"></el-button>
                         </div>
                         <!-- shadowsocks -->
                         <template v-if="inbound.protocol === 'shadowsocks'">
@@ -374,12 +380,15 @@
                  ref="vmessForm" :rules="vmessRules"
                  :model="vmess" size="small"
                  label-position="top">
-            <el-form-item>
+            <el-form-item prop="id">
                 <template slot="label">
+                    <el-tooltip content="请务必自动生成或使用其它 UUID 生成工具，否则会导致重启失败">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
                     用户id
                     <el-button type="text" size="mini" @click="vmess.id = randomUUID()">重新生成</el-button>
                 </template>
-                <el-input v-model="vmess.id" disabled></el-input>
+                <el-input v-model.trim="vmess.id"></el-input>
             </el-form-item>
             <el-form-item label="额外id（alterId）" prop="alterId">
                 <el-input type="number" v-model.number="vmess.alterId" clearable></el-input>
@@ -699,7 +708,7 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.9.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.10.0"></script>
 
 </body>
 </html>

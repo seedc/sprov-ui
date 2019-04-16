@@ -143,10 +143,10 @@ public class V2rayController {
         try {
             if (!service.isInstalled()) {
                 return new Msg(false, "v2ray尚未安装，请先安装");
-            } else if (service.restart()) {
-                return new Msg(true, "操作成功，如配置有误可能会导致重启失败");
             }
-            return new Msg(false, "重启失败，请使用systemctl status v2ray -l命令查看失败原因");
+            service.restart();
+            return new Msg(true, "操作成功，将在数秒后重启，如配置有误可能会导致重启失败");
+            //return new Msg(false, "重启失败，请使用systemctl status v2ray -l命令查看失败原因");
         } catch (V2rayException e) {
             return new Msg(false, e.getMessage());
         } catch (Exception e) {
@@ -163,11 +163,10 @@ public class V2rayController {
     public Msg stop() {
         try {
             if (!service.isInstalled()) {
-                return new Msg(false, "v2ray尚未安装，请先安装");
-            } else if (service.stop()) {
-                return new Msg(true, "关闭成功");
+                return new Msg(false, "v2ray 尚未安装，请先安装");
             }
-            return new Msg(false, "关闭失败，原因未知");
+            service.stop();
+            return new Msg(true, "操作成功，将在数秒后关闭 v2ray");
         } catch (V2rayException e) {
             return new Msg(false, e.getMessage());
         } catch (Exception e) {
@@ -189,6 +188,7 @@ public class V2rayController {
             Map<String, JSONObject> tagInboundMap = extraConfigService.getTagInboundMap();
             while (iterator.hasNext()) {
                 JSONObject inbound = (JSONObject) iterator.next();
+                inbound.put("enable", true);
                 String tag = inbound.getString("tag");
                 if (StringUtils.isEmpty(tag)) {
                     continue;
@@ -200,6 +200,11 @@ public class V2rayController {
                     inbound.putAll(extraInbound);
                 }
             }
+            JSONArray disabledInbounds = extraConfigService.getDisabledInbounds();
+            for (Object obj : disabledInbounds) {
+                ((JSONObject) obj).put("enable", false);
+            }
+            inbounds.addAll(disabledInbounds);
             return new Msg(true, config.toJSONString());
         } catch (Exception e) {
             e.printStackTrace();

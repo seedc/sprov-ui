@@ -33,7 +33,8 @@ const defaultInbound = {
     remark: '',
     downlink: 0,
     uplink: 0,
-    searched: true
+    searched: true,
+    enable: true
 };
 
 const defaultVmessSettings = {
@@ -47,6 +48,9 @@ let formRules = {
 };
 
 let vmessRules = {
+    id: [
+        { required: true, message: '必须填写一个 UUID', trigger: 'blur' }
+    ],
     alterId: [
         { type: 'integer', min: 0, max: 65535, required: true, message: '范围0-65535且为整数', trigger: 'blur' }
     ]
@@ -450,37 +454,48 @@ let app = new Vue({
         },
         resetTraffic: function(inbound) {
             this.confirm('确定要重置该账号的流量吗？（不可恢复）', '')
-                .then(() => {
-                    this.submit('/v2ray/inbound/resetTraffic', { port: inbound.port });
-                });
+                .then(() => this.submit('/v2ray/inbound/resetTraffic', { port: inbound.port }));
         },
         resetAllTraffic: function() {
             this.confirm('确定要重置所有账号的流量吗？（不可恢复）', '')
-                .then(() => {
-                    this.submit('/v2ray/inbound/resetAllTraffic');
-                });
+                .then(() => this.submit('/v2ray/inbound/resetAllTraffic'));
         },
         restart: function() {
             this.confirm('确定要重启 v2ray 吗？', '')
-                .then(() => {
-                    this.submit('/v2ray/restart');
-                });
+                .then(() => this.submit('/v2ray/restart', {a:'a'}));
         },
         stop: function() {
             this.confirm('确定要关闭 v2ray 吗？', '')
-                .then(() => {
-                    this.submit('/v2ray/stop');
-                });
+                .then(() => this.submit('/v2ray/stop', {a:'a'}));
+        },
+        enable: function(inbound) {
+            this.confirm('确定要启用账号吗？', '')
+                .then(() => this.submit('/v2ray/inbound/enable', { port: inbound.port }));
+        },
+        disable: function(inbound) {
+            this.confirm('确定要禁用账号吗？', '')
+                .then(() => this.submit('/v2ray/inbound/disable', { port: inbound.port }));
+        },
+        delDisabled: function(inbound) {
+            this.confirm('确定要删除账号吗？', '')
+                .then(() => this.submit('/v2ray/inbound/delDisabled', { port: inbound.port }));
         },
         submit: function (url, form, dl) {
             this.btnLoad = true;
             if (form === undefined || form === null) {
                 form = {};
             }
+            const loading = this.$loading({
+                lock: true,
+                text: '操作中...',
+                spinner: 'el-icon-loading',
+                background: 'rgba(0, 0, 0, 0.7)'
+            });
             post({
                 url: url,
                 data: form,
                 success: data => {
+                    loading.close();
                     this.btnLoad = false;
                     if (data.success && dl) {
                         dl.visible = false;
@@ -496,9 +511,10 @@ let app = new Vue({
                     });
                 },
                 error: e => {
+                    loading.close();
                     this.btnLoad = false;
                     this.$message({
-                        message: e,
+                        message: '发生网络错误，请检查网络连接，或请关闭代理软件再尝试',
                         type: 'error'
                     });
                 }

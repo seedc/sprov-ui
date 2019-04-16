@@ -16,6 +16,7 @@ public class InboundsRoute {
         Integer port = request.queryMap("port").integerValue();
         if (port == null) {
             halt(404);
+            return null;
         }
         String protocol = request.queryParams("protocol");
         String listen = request.queryParams("listen");
@@ -44,6 +45,7 @@ public class InboundsRoute {
             Integer port = request.queryMap("port").integerValue();
             if (port == null) {
                 halt(404);
+                return null;
             }
             return controller.del(port);
         };
@@ -54,6 +56,7 @@ public class InboundsRoute {
             Integer port = request.queryMap("port").integerValue();
             if (port == null) {
                 halt(404);
+                return null;
             }
             return controller.openTraffic(port);
         };
@@ -64,6 +67,7 @@ public class InboundsRoute {
             Integer port = request.queryMap("port").integerValue();
             if (port == null) {
                 halt(404);
+                return null;
             }
             return controller.resetTraffic(port);
         };
@@ -73,4 +77,36 @@ public class InboundsRoute {
         return (request, response) -> controller.resetAllTraffic();
     }
 
+    public Route enable() {
+        return (request, response) -> {
+            Integer port = request.queryMap("port").integerValue();
+            if (port == null) {
+                halt(404);
+                return null;
+            }
+            return controller.enable(port);
+        };
+    }
+
+    public Route disable() {
+        return (request, response) -> {
+            Integer port = request.queryMap("port").integerValue();
+            if (port == null) {
+                halt(404);
+                return null;
+            }
+            return controller.disable(port);
+        };
+    }
+
+    public Route delDisabled() {
+        return (request, response) -> {
+            Integer port = request.queryMap("port").integerValue();
+            if (port == null) {
+                halt(404);
+                return null;
+            }
+            return controller.delDisabled(port);
+        };
+    }
 }

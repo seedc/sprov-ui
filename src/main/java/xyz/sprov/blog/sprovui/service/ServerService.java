@@ -37,7 +37,7 @@ public class ServerService {
     private GetSystemInfoThread thread = new GetSystemInfoThread();
 
     public ServerService() {
-        threadService.scheduleAtFixedRate(thread, 0, 1, TimeUnit.SECONDS);
+        threadService.scheduleAtFixedRate(thread, 1, 1, TimeUnit.SECONDS);
     }
 
     /**

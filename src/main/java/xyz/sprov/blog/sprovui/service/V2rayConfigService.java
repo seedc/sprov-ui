@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
 import xyz.sprov.blog.sprovui.util.Config;
@@ -12,7 +13,9 @@ import xyz.sprov.blog.sprovui.venum.Protocol;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 //import org.springframework.beans.factory.annotation.Value;
@@ -119,8 +122,10 @@ public class V2rayConfigService {
 
     /**
      * 添加一个入站协议
+     *
+     * @param renameTag 是否自动生成 tag
      */
-    public void addInbound(JSONObject inbound) throws IOException {
+    public void addInbound(JSONObject inbound, boolean renameTag) throws IOException {
         if (inbound == null) {
             throw new V2rayConfigException("配置不能为空");
         }
@@ -131,11 +136,14 @@ public class V2rayConfigService {
             throw new V2rayConfigException("协议填写错误");
         }
         JSONObject config = getConfig();
+        String tag = (String) inbound.getOrDefault("tag", "");
         if (Protocol.MT_PROTO.getValue().equals(protocol)) {
-            String tag = "tg-in-" + port;
-            inbound.put("tag", tag);
+            if (renameTag || StringUtils.isEmpty(tag)) {
+                tag = "tg-in-" + port;
+                inbound.put("tag", tag);
+            }
             addMTOutboundAndRoute(config, tag);
-        } else {
+        } else if (renameTag) {
             inbound.put("tag", "inbound-" + port);
         }
         JSONArray inbounds = getInbounds(config);
@@ -147,6 +155,13 @@ public class V2rayConfigService {
         }
         inbounds.add(inbound);
         writeConfig(config);
+    }
+
+    /**
+     * 添加一个入站协议
+     */
+    public void addInbound(JSONObject inbound) throws IOException {
+        addInbound(inbound, true);
     }
 
     private void addMTOutboundAndRoute(JSONObject config, String tag) {
@@ -343,13 +358,13 @@ public class V2rayConfigService {
                 "    }"));
         writeConfig(config);
 
-        threadService.execute(() -> {
+        threadService.schedule(() -> {
             try {
                 v2rayService.restart();
             } catch (Exception e) {
                 System.err.println("v2ray 重启失败：" + e.getMessage());
             }
-        });
+        }, 1, TimeUnit.SECONDS);
     }
 
     private void removeTag(JSONArray inbounds, String tag) {

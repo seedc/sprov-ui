@@ -20,7 +20,7 @@ public class SprovUIService {
 
     private String githubLastReleaseUrl = "https://github.com/sprov065/sprov-ui/releases/latest";
 
-    private String currentVersion = "2.9.0";
+    private String currentVersion = "2.10.0";
 
     private String lastVersion = currentVersion;
 
@@ -29,7 +29,7 @@ public class SprovUIService {
     private String jarDir = "/usr/local/sprov-ui/";
 
     public SprovUIService() {
-        threadService.scheduleAtFixedRate(new FlushLastVersionRunnable(), 0, 30, TimeUnit.MINUTES);
+        threadService.scheduleAtFixedRate(new FlushLastVersionRunnable(), 1, 30, TimeUnit.MINUTES);
     }
 
     private String getLastVersion() throws Exception {
@@ -39,6 +39,10 @@ public class SprovUIService {
             return matcher.group(1);
         }
         throw new IOException("获取最新版本失败");
+    }
+
+    public String getCurrentVersion() {
+        return currentVersion;
     }
 
     private String getLastDownloadUrl() {

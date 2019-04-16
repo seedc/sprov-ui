@@ -1,10 +1,12 @@
 package xyz.sprov.blog.sprovui.service;
 
 import xyz.sprov.blog.sprovui.exception.V2rayException;
+import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.util.ExecUtil;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 //import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 //@Service
 public class V2rayService {
+
+    private ThreadService threadService = Context.threadService;
 
 //    @Value("${spring.profiles.active}")
 //    private String active;
@@ -131,21 +135,21 @@ public class V2rayService {
     /**
      * 重启v2ray
      */
-    public boolean restart() throws IOException, InterruptedException {
+    public void restart() {
         if (inOperation.get()) {
             throw new V2rayException("正在操作中，请稍后");
         }
-        return operation(restartCmd);
+        threadService.schedule(() -> operation(restartCmd), 3, TimeUnit.SECONDS);
     }
 
     /**
      * 关闭v2ray
      */
-    public boolean stop() throws IOException, InterruptedException {
+    public void stop() {
         if (inOperation.get()) {
             throw new V2rayException("正在操作中，请稍后");
         }
-        return operation(stopCmd);
+        threadService.schedule(() -> operation(stopCmd), 3, TimeUnit.SECONDS);
     }
 
     private boolean operation(String cmd) throws IOException, InterruptedException {
