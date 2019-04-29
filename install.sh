@@ -184,7 +184,7 @@ install_sprov-ui() {
     fi
     set_systemd
     echo ""
-    echo -e "${green}sprov-ui 面板安装成功，请手动启动${plain}\n"
+    echo -e "${green}sprov-ui 面板安装成功，请手动重启或启动${plain}\n"
     echo ""
     echo -e "开启面板：${green}systemctl start sprov-ui${plain}"
     echo -e "关闭面板：${green}systemctl stop sprov-ui${plain}"
