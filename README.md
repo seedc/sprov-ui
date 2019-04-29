@@ -20,6 +20,7 @@
  - tcp
  - kcp + 伪装
  - ws + 伪装 + tls
+ - http/2 + 伪装 + tls
  
 # 运行截图
 ![1.png](1.png)
