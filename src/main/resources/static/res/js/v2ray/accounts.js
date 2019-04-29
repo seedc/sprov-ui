@@ -80,13 +80,28 @@ let kcpRules = {
     ]
 };
 
+let tlsRules = {
+    certFile: [
+        { required: true, message: '必须输入证书文件路径', trigger: 'blur' }
+    ],
+    keyFile: [
+        { required: true, message: '必须输入密钥文件路径', trigger: 'blur' }
+    ]
+};
+
 let wsRules = {
     path: [
         { required: true, message: '必须填入一个路径', trigger: 'blur' }
     ]
 };
 
-const forms = ['inForm', 'vmessForm', 'ssForm', 'dokoForm', 'kcpForm', 'wsForm'];
+const http2Rules = {
+    path: [
+        { required: true, message: '必须填入一个路径', trigger: 'blur' }
+    ]
+};
+
+const forms = ['inForm', 'vmessForm', 'ssForm', 'dokoForm', 'kcpForm', 'wsForm', 'http2Form', 'tlsForm'];
 
 let app = new Vue({
     el: '#app',
@@ -107,6 +122,8 @@ let app = new Vue({
         dokoRules: dokoRules,
         kcpRules: kcpRules,
         wsRules: wsRules,
+        http2Rules: http2Rules,
+        tlsRules: tlsRules,
         form: {},
         vmess: {},
         ss: {},
@@ -117,6 +134,7 @@ let app = new Vue({
         stream: {},
         kcp: {},
         ws: {},
+        http2: {},
         tls: {}
     },
     methods: {
@@ -195,6 +213,10 @@ let app = new Vue({
                     { name: '', value: '' }
                 ]
             };
+            this.http2 = {
+                path: '/',
+                hosts: []
+            };
             this.tls = {
                 serverName: '',
                 certFile: '',
@@ -238,6 +260,11 @@ let app = new Vue({
                 this.ws = {
                     path: wsSettings.path,
                     headers: headers
+                };
+                let httpSettings = streamSettings.httpSettings;
+                this.http2 = {
+                    path: httpSettings.path,
+                    hosts: clone(httpSettings.host)
                 };
                 let tlsSettings = streamSettings.tlsSettings;
                 this.tls = {
@@ -324,6 +351,19 @@ let app = new Vue({
                         path: ws.path,
                         headers: headers
                     };
+                } else if (stream.network === 'http') {
+                    let http2 = this.http2;
+                    let host = [];
+                    for (let i = 0; i < http2.hosts.length; ++i) {
+                        if (!isEmpty(http2.hosts[i])) {
+                            host.push(http2.hosts[i]);
+                        }
+                    }
+                    streamSettings.httpSettings = {
+                        host: host,
+                        path: http2.path
+                    };
+                    stream.security = 'tls';
                 }
                 if (stream.security === 'tls') {
                     const tls = this.tls;
@@ -393,30 +433,22 @@ let app = new Vue({
                 }
             }
         },
-        validateForms: function(form, callback) {
-            this.$refs['inForm'].validate(valid => {
-                if (valid) {
-                    if (form.protocol === 'vmess') {
-                        this.$refs['vmessForm'].validate(valid => {
-                            if (valid && this.$refs['kcpForm']) {
-                                this.$refs['kcpForm'].validate(callback);
-                            } else if (valid && this.$refs['wsForm']) {
-                                this.$refs['wsForm'].validate(callback);
-                            } else {
-                                execute(callback, valid);
-                            }
-                        });
-                    } else if (form.protocol === 'shadowsocks') {
-                        this.$refs['ssForm'].validate(callback);
-                    } else if (form.protocol === 'dokodemo-door') {
-                        this.$refs['dokoForm'].validate(callback);
-                    } else {
-                        execute(callback, valid);
-                    }
-                } else {
-                    execute(callback, valid);
+        validateForms: function(callback) {
+            const promises = [];
+            for (let i = 0; i < forms.length; ++i) {
+                let form = this.$refs[forms[i]];
+                if (form) {
+                    let promise = form.validate();
+                    promises.push(promise);
                 }
-            });
+            }
+            Promise.all(promises)
+                .then(_ => {
+                    execute(callback, true);
+                })
+                .catch(_ => {
+                    execute(callback, false);
+                });
         },
         addOrEdit: function(form) {
             if (this.inDL.mode === 'add') {
@@ -426,7 +458,7 @@ let app = new Vue({
             }
         },
         addInbound: function (form) {
-            this.validateForms(form, valid => {
+            this.validateForms(valid => {
                 if (valid) {
                     this.submit('/v2ray/inbound/add', this.getInbound(form), this.inDL);
                 } else {
@@ -438,7 +470,7 @@ let app = new Vue({
             });
         },
         editInbound: function (form) {
-            this.validateForms(form, valid => {
+            this.validateForms(valid => {
                 if (valid) {
                     this.submit('/v2ray/inbound/edit', this.getInbound(form), this.inDL);
                 } else {
@@ -462,11 +494,11 @@ let app = new Vue({
         },
         restart: function() {
             this.confirm('确定要重启 v2ray 吗？', '')
-                .then(() => this.submit('/v2ray/restart', {a:'a'}));
+                .then(() => this.submit('/v2ray/restart'));
         },
         stop: function() {
             this.confirm('确定要关闭 v2ray 吗？', '')
-                .then(() => this.submit('/v2ray/stop', {a:'a'}));
+                .then(() => this.submit('/v2ray/stop'));
         },
         enable: function(inbound) {
             this.confirm('确定要启用账号吗？', '')
@@ -552,6 +584,17 @@ let app = new Vue({
                 dangerouslyUseHTMLString: true
             });
         },
+        showHosts: function(obj) {
+            let html = '<div>';
+            for (let i in obj) {
+                html += '<p>' + obj[i] + '</p>';
+            }
+            html += '</div>';
+            this.$alert(html, '', {
+                center: true,
+                dangerouslyUseHTMLString: true
+            });
+        },
         showQrCode: function(str) {
             this.qrCodeDL.visible = true;
             this.$nextTick(() => {
@@ -590,6 +633,10 @@ let app = new Vue({
                 let wsSettings = inbound.streamSettings.wsSettings;
                 path = wsSettings.path;
                 host = propIgnoreCase(wsSettings.headers, 'host') ? propIgnoreCase(wsSettings.headers, 'host') : '';
+            } else if (network === 'http') {
+                network = 'h2';
+                path = inbound.streamSettings.httpSettings.path;
+                host = this.arrToString(inbound.streamSettings.httpSettings.host);
             }
             let obj = {
                 v: '2',
@@ -621,10 +668,12 @@ let app = new Vue({
             }
             let str = '';
             if (arr) {
-                for (let i in arr) {
+                for (let i = 0; i < arr.length; ++i) {
                     str += arr[i] + split;
                 }
-                str = str.substring(0, str.length - split);
+                if (str.length > 0) {
+                    str = str.substring(0, str.length - split.length);
+                }
             }
             return str;
         },
@@ -644,6 +693,11 @@ let app = new Vue({
         }
     },
     watch: {
+        'stream.network': function (network) {
+            if (network === 'http') {
+                this.stream.tls = true;
+            }
+        },
         'config': function (config) {
             this.setInbounds(config.inbounds);
         },
@@ -658,7 +712,7 @@ let app = new Vue({
                 }
             } else {
                 for (let i = 0; i < inbounds.length; ++i) {
-                    inbounds[i].searched = true;
+                    inbounds[i].searched = true;``
                 }
             }
         }

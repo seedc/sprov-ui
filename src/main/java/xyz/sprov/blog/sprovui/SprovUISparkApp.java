@@ -19,7 +19,7 @@ public class SprovUISparkApp {
         threadPool(4, 1, 60000);
 
         initExceptionHandler(e -> {
-            System.err.println("sprov-ui启动失败：" + e.getMessage());
+            System.err.println("sprov-ui 启动失败：" + e.getMessage());
             System.exit(1);
         });
 

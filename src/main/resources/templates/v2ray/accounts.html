@@ -98,7 +98,7 @@
                     <el-card v-if="inbound.searched && inbound.protocol === 'vmess'"
                              v-for="(client, index) in inbound.settings.clients">
                         <div slot="header">
-                            <el-tag type="success">{{ inbound.protocol }}</el-tag>
+                            <el-tag type="success">{{ inbound.protocol }}-{{ inbound.streamSettings.network }}</el-tag>
                             <el-button v-if="inbound.enable" type="primary" size="mini" icon="el-icon-edit" @click="openEdit(inbound, client)"></el-button>
                             <el-button v-if="inbound.enable" type="danger" size="mini" style="margin-left: 0" @click="disable(inbound)">禁用</el-button>
                             <el-button v-else type="success" size="mini" style="margin-left: 0" @click="enable(inbound)">启用</el-button>
@@ -161,6 +161,17 @@
                                 HTTP 头：
                                 <span v-if="JSON.stringify(inbound.streamSettings.wsSettings.headers) === '{}'">无</span>
                                 <el-button v-else type="text" @click="showHeaders(inbound.streamSettings.wsSettings.headers)">查看</el-button>
+                            </el-col>
+                        </el-row>
+                        <!-- http2 -->
+                        <el-row v-if="inbound.streamSettings.network === 'http'">
+                            <el-col :sm="12">
+                                路径：<el-tag>{{ inbound.streamSettings.httpSettings.path }}</el-tag>
+                            </el-col>
+                            <el-col :sm="12">
+                                Host：
+                                <span v-if="JSON.stringify(inbound.streamSettings.httpSettings.host) === '[]'">无</span>
+                                <el-button v-else type="text" @click="showHosts(inbound.streamSettings.httpSettings.host)">查看</el-button>
                             </el-col>
                         </el-row>
                         <el-row v-if="inbound.streamSettings.security === 'tls'">
@@ -361,7 +372,7 @@
             <el-form-item>
                 <template slot="label">
                     监听 IP
-                    <el-tooltip content="若服务器有多个IP，可以指定只监听一个IP，配置错误的IP会导致v2ray重启失败，默认0.0.0.0表示监听所有IP">
+                    <el-tooltip content="若一台服务器有多个IP，可以指定只监听一个IP，配置错误的IP会导致v2ray重启失败，默认0.0.0.0表示监听所有IP。若不理解上述内容，请不要修改">
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                 </template>
@@ -382,7 +393,7 @@
                  label-position="top">
             <el-form-item prop="id">
                 <template slot="label">
-                    <el-tooltip content="请务必自动生成或使用其它 UUID 生成工具，否则会导致重启失败">
+                    <el-tooltip content="如果手动填写，请务必填写正确的 UUID，否则会导致重启失败">
                         <i class="el-icon-question"></i>
                     </el-tooltip>
                     用户id
@@ -553,6 +564,7 @@
                     <el-option label="tcp" value="tcp"></el-option>
                     <el-option label="kcp（底层使用udp协议）" value="kcp"></el-option>
                     <el-option label="ws（WebSocket）" value="ws"></el-option>
+                    <el-option label="h2（HTTP/2）" value="http"></el-option>
                 </el-select>
             </el-form-item>
         </el-form>
@@ -648,8 +660,43 @@
                 <el-switch v-model="stream.tls"></el-switch>
             </el-form-item>
         </el-form>
+        <!-- http Settings -->
+        <el-form v-if="form.protocol === 'vmess' && stream.network === 'http'"
+                 ref="http2Form" :rules="http2Rules"
+                 :model="http2" size="small"
+                 label-position="top">
+            <el-form-item prop="path">
+                <template slot="label">
+                    路径
+                    <el-tooltip content="HTTP/2 所使用的 HTTP 协议路径">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-input v-model.trim="http2.path" clearable></el-input>
+            </el-form-item>
+            <el-form-item>
+                <template slot="label">
+                    Host
+                    <el-tooltip content="自定义 Host，可添加多个">
+                        <i class="el-icon-question"></i>
+                    </el-tooltip>
+                </template>
+                <el-row v-for="(host, index) in http2.hosts" type="flex" justify="center">
+                    <el-col :span="20">
+                        <el-input v-model.trim="http2.hosts[index]" clearable></el-input>
+                    </el-col>
+                    <el-col :span="4">
+                        <el-button v-if="index > 0 && index === http2.hosts.length - 1" type="text" size="mini" icon="el-icon-minus" @click="http2.hosts.splice(index, 1)"></el-button>
+                    </el-col>
+                </el-row>
+                <el-row>
+                    <el-button type="success" size="mini" icon="el-icon-plus" @click="http2.hosts.push('')"></el-button>
+                </el-row>
+            </el-form-item>
+        </el-form>
         <!-- tls Settings -->
-        <el-form v-if="form.protocol === 'vmess' && stream.network === 'ws' && stream.security === 'tls'"
+        <el-form v-if="form.protocol === 'vmess' && ((stream.network === 'ws' || stream.network === 'http') && stream.security === 'tls')"
+                 ref="tlsForm" :rules="tlsRules" :model="tls"
                  size="small" label-position="top">
             <el-form-item>
                 <template slot="label">
@@ -660,7 +707,7 @@
                 </template>
                 <el-input v-model.trim="tls.serverName" clearable></el-input>
             </el-form-item>
-            <el-form-item>
+            <el-form-item prop="certFile">
                 <template slot="label">
                     证书
                     <el-tooltip content="证书文件路径，如使用 OpenSSL 生成，后缀名为 .crt。">
@@ -669,7 +716,7 @@
                 </template>
                 <el-input v-model.trim="tls.certFile" clearable></el-input>
             </el-form-item>
-            <el-form-item>
+            <el-form-item prop="keyFile">
                 <template slot="label">
                     密钥
                     <el-tooltip content="密钥文件路径，如使用 OpenSSL 生成，后缀名为 .key。目前暂不支持需要密码的 key 文件。">
@@ -708,7 +755,7 @@
 <script src="/res/js/application.js?v=2.5.0"></script>
 <script src="/res/js/vue-init.js?v=1.0.0"></script>
 <script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/accounts.js?v=2.10.0"></script>
+<script src="/res/js/v2ray/accounts.js?v=2.11.0"></script>
 
 </body>
 </html>
