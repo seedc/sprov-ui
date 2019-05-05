@@ -39,10 +39,10 @@
 
 以下两条命令皆可，两者是一样的，只需要运行一个，如果其中一个有错误，可以运行另外一个。
 ```
-wget -O install.sh -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh && bash install.sh
+bash <(curl -L -s https://blog.sprov.xyz/sprov-ui.sh)
 ```
 ```
-wget -O install.sh -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/install.sh && bash install.sh
+bash <(curl -L -s https://github.com/sprov065/sprov-ui/raw/master/install.sh)
 ```
 # 详细教程
 https://blog.sprov.xyz/2019/02/09/sprov-ui/
