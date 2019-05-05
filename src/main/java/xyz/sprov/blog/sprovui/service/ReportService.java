@@ -19,7 +19,7 @@ public class ReportService {
     private ThreadService threadService = Context.threadService;
 
     public ReportService() {
-        threadService.scheduleAtFixedRate(new ReportThread(), 1, 10, TimeUnit.MINUTES);
+        threadService.scheduleAtFixedRate(new ReportThread(), 30, 30, TimeUnit.MINUTES);
     }
 
     private class ReportThread implements Runnable {
