@@ -310,7 +310,7 @@ update_shell() {
         echo -e "${red}下载脚本失败，请检查本机能否连接 Github${plain}"
         before_show_menu
     else
-        chmod +x /usr/local/bing/sprov-ui
+        chmod +x /usr/local/bin/sprov-ui
         echo -e "${green}升级脚本成功，请重新运行脚本${plain}" && exit 0
     fi
 }
