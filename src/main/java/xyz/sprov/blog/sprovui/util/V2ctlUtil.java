@@ -23,7 +23,7 @@ public class V2ctlUtil {
     }
 
     public static Map<String, InboundTraffic> getInboundTraffics(boolean reset) throws IOException, InterruptedException {
-        int port = Config.getApiPort();
+        int port = Config.apiPort();
         if (port <= 0) {
             throw new RuntimeException("错误：未开启 v2ray api");
         }

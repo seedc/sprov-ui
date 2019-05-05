@@ -28,6 +28,7 @@
             <el-menu-item index="/v2ray/">运行状态</el-menu-item>
             <el-menu-item index="/v2ray/accounts/">账号列表</el-menu-item>
             <el-menu-item index="/v2ray/clients/">客户端</el-menu-item>
+            <el-menu-item index="/logout/">退出</el-menu-item>
         </el-menu>
         <el-dropdown class="hidden-sm-and-up"
                      @command="menuSelect"
@@ -38,7 +39,7 @@
             <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="/v2ray/">运行状态</el-dropdown-item>
                 <el-dropdown-item command="/v2ray/accounts/">账号列表</el-dropdown-item>
-                <el-dropdown-item command="/v2ray/clients/">客户端</el-dropdown-item>
+                <el-dropdown-item command="/logout/">退出</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
     </el-header>

@@ -27,6 +27,7 @@ public class Context {
     public static final ServerService serverService = new ServerService();
     public static final SprovUIService sprovUIService = new SprovUIService();
     public static final ReportService reportService = new ReportService();
+    public static final SecureService secureService = new SecureService();
 
     public static final V2rayController v2rayController = new V2rayController();
     public static final InboundsController inboundsController = new InboundsController();

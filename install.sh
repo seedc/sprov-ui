@@ -1,11 +1,44 @@
 #!/bin/bash
 
+#=================================================
+#   System Required: CentOS 7+ / Debian 8+ / Ubuntu 16+
+#   Description: install or update sprov-ui
+#   Author: sprov
+#   Blog: https://blog.sprov.xyz
+#   Github - sprov-ui: https://github.com/sprov065/sprov-ui
+#=================================================
+
+#       ┏┓    ┏┓  + +
+#      ┏┛┻━━━━┛┻┓ + +
+#      ┃        ┃ + +
+#      ┃   ━    ┃ + + + + +
+#     ████━████ ┃ + + + + +
+#      ┃        ┃ +
+#      ┃   ┻    ┃
+#      ┃        ┃ + +
+#      ┗━┓    ┏━┛
+#        ┃    ┃
+#        ┃    ┃ + + + +
+#        ┃    ┃ Codes are far away from bugs with the animal protecting
+#        ┃    ┃ + 神兽保佑,代码无bug　　
+#        ┃    ┃
+#        ┃    ┃ +
+#        ┃    ┗━━━┓ + +
+#        ┃        ┣┓
+#        ┃       ┏┛
+#        ┗┓┓┏━┳┓┏┛+ + + +
+#         ┃┫┫ ┃┫┫
+#         ┗┻┛ ┗┻┛+ + + +
+
 red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
 cur_dir=$(pwd)
+
+conf_dir="/etc/sprov-ui/"
+conf_path="${conf_dir}sprov-ui.conf"
 
 # check root
 [[ $EUID -ne 0 ]] && echo -e "${red}错误：${plain} 必须使用root用户运行此脚本！\n" && exit 1
@@ -110,12 +143,20 @@ user="sprov"
 pwd="blog.sprov.xyz"
 
 init_config() {
-    if [[ ! -e "/etc/sprov-ui" ]]; then
-        mkdir /etc/sprov-ui
+    if [[ ! -e "${conf_dir}" ]]; then
+        mkdir ${conf_dir}
     fi
-    echo "port=${port}" > /etc/sprov-ui/sprov-ui.conf
-    echo "username=${user}" >> /etc/sprov-ui/sprov-ui.conf
-    echo "password=${pwd}" >> /etc/sprov-ui/sprov-ui.conf
+    if [[ ! -f ${conf_path} ]]; then
+        echo "port=${port}" >> ${conf_path}
+        echo "username=${user}" >> ${conf_path}
+        echo "password=${pwd}" >> ${conf_path}
+        echo "keystoreFile=" >> ${conf_path}
+        echo "keystorePass=" >> ${conf_path}
+    else
+        sed -i "s/^port=.*/port=${port}/" ${conf_path}
+        sed -i "s/^username=.*/username=${user}/" ${conf_path}
+        sed -i "s/^password=.*/password=${pwd}/" ${conf_path}
+    fi
 
     echo ""
     echo -e "面板监听端口（不是v2ray端口）：${green}${port}${plain}"
@@ -143,14 +184,14 @@ set_systemd() {
     init_service
     reset="y"
     first="y"
-    if [[ -f "/etc/sprov-ui/sprov-ui.conf" ]]; then
+    if [[ -f "${conf_path}" ]]; then
         read -p "是否重新设置面板端口、用户名和密码[y/n]：" reset
         first="n"
     fi
     if [[ x"$reset" == x"y" || x"$reset" == x"Y" ]]; then
-        read -p "请输入面板监听端口[默认80]：" port
-        read -p "请输入面板登录用户名[默认sprov]：" user
-        read -p "请输入面板登录密码[默认blog.sprov.xyz]：" pwd
+        read -p "请输入面板监听端口[默认${port}]：" port
+        read -p "请输入面板登录用户名[默认${user}]：" user
+        read -p "请输入面板登录密码[默认${pwd}]：" pwd
         if [[ -z "${port}" ]]; then
             port=80
         fi
@@ -183,23 +224,25 @@ install_sprov-ui() {
         exit 1
     fi
     set_systemd
-    echo ""
-    echo -e "${green}sprov-ui 面板安装成功，请手动重启或启动${plain}\n"
-    echo ""
-    echo -e "开启面板：${green}systemctl start sprov-ui${plain}"
-    echo -e "关闭面板：${green}systemctl stop sprov-ui${plain}"
-    echo -e "重启面板：${green}systemctl restart sprov-ui${plain}"
-    echo -e "运行状态：${green}systemctl status sprov-ui${plain}"
-    echo -e "开机自启：${green}systemctl enable sprov-ui${plain}"
-    echo -e "取消开机自启：${green}systemctl disable sprov-ui${plain}"
-    echo ""
-    echo -e "开启、关闭、重启面板时没有输出任何信息是正常的，若不放心，可以检查运行状态：${green}systemcl status sprov-ui${plain}"
-    echo ""
-    echo -e "若面板无法启动（状态为 failed），请使用以下命令手动启动检查问题所在："
-    echo -e "${green}/usr/bin/java -jar /usr/local/sprov-ui/sprov-ui.jar${plain}"
-    echo ""
-    echo -e "若未安装bbr等加速工具，推荐使用以下命令一键安装bbr："
+    echo -e ""
+    echo -e "${green}sprov-ui 面板安装成功${plain}\n"
+    echo -e ""
+    echo -e "sprov-ui 管理脚本使用方法: "
+    echo -e "------------------------------------------"
+    echo -e "sprov-ui              - 显示管理菜单 (功能更多)"
+    echo -e "sprov-ui start        - 启动 sprov-ui 面板"
+    echo -e "sprov-ui stop         - 停止 sprov-ui 面板"
+    echo -e "sprov-ui restart      - 重启 sprov-ui 面板"
+    echo -e "sprov-ui status       - 查看 sprov-ui 状态"
+    echo -e "sprov-ui log          - 查看 sprov-ui 日志"
+    echo -e "sprov-ui update       - 更新 sprov-ui 面板"
+    echo -e "sprov-ui install      - 安装 sprov-ui 面板"
+    echo -e "sprov-ui uninstall    - 卸载 sprov-ui 面板"
+    echo -e "------------------------------------------"
+    echo -e ""
+    echo -e "若未安装 bbr 等加速工具，推荐使用以下命令一键安装 bbr："
     echo -e "wget --no-check-certificate https://github.com/sprov065/blog/raw/master/bbr.sh && bash bbr.sh"
+    echo -e ""
 }
 
 echo "开始安装"

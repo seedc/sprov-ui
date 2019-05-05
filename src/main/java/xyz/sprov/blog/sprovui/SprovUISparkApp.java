@@ -1,7 +1,10 @@
 package xyz.sprov.blog.sprovui;
 
+import org.apache.commons.lang3.StringUtils;
 import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.SparkUtil;
+
+import java.io.File;
 
 import static spark.Spark.*;
 import static xyz.sprov.blog.sprovui.util.Context.*;
@@ -16,6 +19,7 @@ public class SprovUISparkApp {
         long start = System.currentTimeMillis();
         int port  = Config.getPort();
         port(port);
+
         threadPool(4, 1, 60000);
 
         initExceptionHandler(e -> {
@@ -28,11 +32,22 @@ public class SprovUISparkApp {
         staticFiles.location("/static");
         staticFiles.expireTime(3600 * 24 * 30 * 6);
 
+        String keystoreFile = Config.keystoreFile();
+        if (!StringUtils.isEmpty(keystoreFile)) {
+            if (!new File(keystoreFile).exists()) {
+                throw new RuntimeException("keystoreFile - " + keystoreFile + " 不存在");
+            } else {
+                secure(keystoreFile, Config.keystorePass(), null, null);
+            }
+        }
+
         before("", encodingFilter);
         before("/*", encodingFilter);
 
         get("/", baseRoute.index());
         post("/login", baseRoute.login(), jsonTransformer);
+        get("/logout", baseRoute.logout(), jsonTransformer);
+        get("/logout/", baseRoute.logout(), jsonTransformer);
 
         get("/robots.txt", baseRoute.robots());
 

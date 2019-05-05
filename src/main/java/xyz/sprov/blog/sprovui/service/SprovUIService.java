@@ -29,7 +29,7 @@ public class SprovUIService {
     private String jarDir = "/usr/local/sprov-ui/";
 
     public SprovUIService() {
-        threadService.scheduleAtFixedRate(new FlushLastVersionRunnable(), 1, 30, TimeUnit.MINUTES);
+        threadService.scheduleAtFixedRate(new GetLastVersionRunnable(), 10, 30, TimeUnit.MINUTES);
     }
 
     private String getLastVersion() throws Exception {
@@ -49,7 +49,7 @@ public class SprovUIService {
         return "https://github.com/sprov065/sprov-ui/releases/download/" + lastVersion + "/sprov-ui-" + lastVersion + ".jar";
     }
 
-    private void flushLastVersion() throws Exception {
+    private void refreshLastVersion() throws Exception {
         String lastVersion = getLastVersion();
         if (currentVersion.equals(lastVersion)) {
             return;
@@ -122,12 +122,12 @@ public class SprovUIService {
         ExecUtil.execForStatus("systemctl restart sprov-ui");
     }
 
-    private class FlushLastVersionRunnable implements Runnable {
+    private class GetLastVersionRunnable implements Runnable {
 
         @Override
         public void run() {
             try {
-                flushLastVersion();
+                refreshLastVersion();
             } catch (Exception e) {
                 System.err.println("检测 sprov-ui 最新版本失败：" + e.getMessage());
             }

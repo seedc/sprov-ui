@@ -17,4 +17,8 @@ public class SessionUtil {
         request.session().attribute(USER_LOGIN, user);
     }
 
+    public static void removeUser(Request request) {
+        request.session().removeAttribute(USER_LOGIN);
+    }
+
 }
