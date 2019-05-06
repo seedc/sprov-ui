@@ -40,6 +40,7 @@
 以下两条命令皆可，两者是一样的，只需要运行一个，如果其中一个有错误，可以运行另外一个。
 ```
 wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui && sprov-ui
+
 ```
 ```
 wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui && sprov-ui
