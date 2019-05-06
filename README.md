@@ -2,6 +2,7 @@
  一个支持多协议多用户的v2ray Web面板
  
 # 支持的功能
+ - https 访问面板
  - 系统运行状态监控
  - 多协议、多用户管理
  - 禁用、启用单个账号
@@ -35,14 +36,14 @@
  - Debian 9
 
 # 一键安装&升级面板
->面板已内置升级功能（每30分钟从 Github 检测一次）
 
 以下两条命令皆可，两者是一样的，只需要运行一个，如果其中一个有错误，可以运行另外一个。
 ```
-bash <(curl -L -s https://blog.sprov.xyz/sprov-ui.sh)
+wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui && sprov-ui
 ```
 ```
-bash <(curl -L -s https://github.com/sprov065/sprov-ui/raw/master/install.sh)
+wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui && sprov-ui
+
 ```
 # 详细教程
 https://blog.sprov.xyz/2019/02/09/sprov-ui/
