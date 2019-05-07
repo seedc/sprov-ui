@@ -91,7 +91,7 @@ sprov_ui_status=-1
 
 confirm() {
     if [[ $# > 1 ]]; then
-        read -p "$1 [默认$2]: " temp
+        echo && read -p "$1 [默认$2]: " temp
         if [[ x"${temp}" == x"" ]]; then
             temp=$2
         fi
@@ -146,6 +146,14 @@ install() {
 }
 
 update() {
+    confirm "本功能会强制重装当前最新版，数据不会丢失，是否继续?" "n"
+    if [[ $? != 0 ]]; then
+        echo -e "${red}已取消${plain}"
+        if [[ $# == 0 ]]; then
+            before_show_menu
+        fi
+        return 0
+    fi
     install_base
     bash <(curl -L -s https://github.com/sprov065/sprov-ui/raw/master/install.sh)
     if [[ $? == 0 ]]; then
