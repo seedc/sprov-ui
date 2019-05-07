@@ -3,7 +3,7 @@
 #======================================================
 #   System Required: CentOS 7+ / Debian 8+ / Ubuntu 16+
 #   Description: Manage sprov-ui
-#   version: v1.0.0
+#   version: v1.0.1
 #   Author: sprov
 #   Blog: https://blog.sprov.xyz
 #   Github - sprov-ui: https://github.com/sprov065/sprov-ui
@@ -36,7 +36,7 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-version="v1.0.0"
+version="v1.0.1"
 conf_dir="/etc/sprov-ui/"
 conf_path="${conf_dir}sprov-ui.conf"
 
