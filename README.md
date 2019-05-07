@@ -1,6 +1,9 @@
 # sprov-ui
  一个支持多协议多用户的v2ray Web面板
  
+# 详细教程
+https://blog.sprov.xyz/2019/02/09/sprov-ui/
+ 
 # 支持的功能
  - https 访问面板
  - 系统运行状态监控
@@ -46,8 +49,6 @@ wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://blog.sprov.xyz
 wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui && sprov-ui
 
 ```
-# 详细教程
-https://blog.sprov.xyz/2019/02/09/sprov-ui/
 
 # Telegram 群组
 https://t.me/sprov_blog
