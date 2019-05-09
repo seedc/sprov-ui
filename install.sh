@@ -234,6 +234,8 @@ install_sprov-ui() {
     echo -e "sprov-ui stop         - 停止 sprov-ui 面板"
     echo -e "sprov-ui restart      - 重启 sprov-ui 面板"
     echo -e "sprov-ui status       - 查看 sprov-ui 状态"
+    echo -e "sprov-ui enable       - 设置 sprov-ui 开机自启"
+    echo -e "sprov-ui disable      - 取消 sprov-ui 开启自启"
     echo -e "sprov-ui log          - 查看 sprov-ui 日志"
     echo -e "sprov-ui update       - 更新 sprov-ui 面板"
     echo -e "sprov-ui install      - 安装 sprov-ui 面板"
