@@ -109,6 +109,9 @@ install_java() {
     fi
     if [[ $? -ne 0 ]]; then
         echo -e "${red}Java环境安装失败，请检查错误信息${plain}"
+        echo -e "尝试更新系统可能可以解决该问题"
+        echo -e "CentOS: ${green}yum update${plain}"
+        echo -e "Debian / Ubuntu: ${green}apt-get update${plain}"
         exit 1
     fi
 }
