@@ -243,7 +243,7 @@ install_sprov-ui() {
     echo -e "------------------------------------------"
     echo -e ""
     echo -e "若未下载管理脚本，使用以下命令下载管理脚本:"
-    echo -e "wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/local/bin/sprov-ui"
+    echo -e "wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/bin/sprov-ui"
     echo -e ""
     echo -e "若未安装 bbr 等加速工具，推荐使用以下命令一键安装 bbr："
     echo -e "wget --no-check-certificate https://github.com/sprov065/blog/raw/master/bbr.sh && bash bbr.sh"
