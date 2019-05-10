@@ -3,7 +3,7 @@
 #======================================================
 #   System Required: CentOS 7+ / Debian 8+ / Ubuntu 16+
 #   Description: Manage sprov-ui
-#   version: v1.1.0
+#   version: v1.1.1
 #   Author: sprov
 #   Blog: https://blog.sprov.xyz
 #   Github - sprov-ui: https://github.com/sprov065/sprov-ui
@@ -36,7 +36,7 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-version="v1.1.0"
+version="v1.1.1"
 conf_dir="/etc/sprov-ui/"
 conf_path="${conf_dir}sprov-ui.conf"
 
@@ -178,8 +178,8 @@ uninstall() {
     rm /etc/systemd/system/sprov-ui.service -f
     systemctl daemon-reload
     systemctl reset-failed
-    rm /etc/sprov-ui -rf
-    rm /usr/local/sprov-ui -rf
+    rm /etc/sprov-ui/ -rf
+    rm /usr/local/sprov-ui/ -rf
 
     echo ""
     echo -e "${gree}卸载成功${plain}，感谢你的使用，如果你有更多的建议或意见，可以在以下地方进行讨论: "
@@ -339,13 +339,13 @@ install_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/local/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh
+    wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         echo -e "${red}下载脚本失败，请检查本机能否连接 Github${plain}"
         before_show_menu
     else
-        chmod +x /usr/local/bin/sprov-ui
+        chmod +x /usr/bin/sprov-ui
         echo -e "${green}升级脚本成功，请重新运行脚本${plain}" && exit 0
     fi
 }
