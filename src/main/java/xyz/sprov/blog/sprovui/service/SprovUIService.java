@@ -1,8 +1,9 @@
 package xyz.sprov.blog.sprovui.service;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import spark.utils.IOUtils;
 import xyz.sprov.blog.sprovui.exception.SprovUIException;
+import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.util.ExecUtil;
 import xyz.sprov.blog.sprovui.util.HttpUtil;
@@ -20,7 +21,7 @@ public class SprovUIService {
 
     private String githubLastReleaseUrl = "https://github.com/sprov065/sprov-ui/releases/latest";
 
-    private String currentVersion = "3.0.0";
+    private String currentVersion = Config.currentVersion();
 
     private String lastVersion = currentVersion;
 
@@ -29,7 +30,7 @@ public class SprovUIService {
     private String jarDir = "/usr/local/sprov-ui/";
 
     public SprovUIService() {
-        threadService.scheduleAtFixedRate(new GetLastVersionRunnable(), 10, 30, TimeUnit.MINUTES);
+        threadService.scheduleAtFixedRate(new GetLastVersionRunnable(), 5, 29, TimeUnit.MINUTES);
     }
 
     private String getLastVersion() throws Exception {

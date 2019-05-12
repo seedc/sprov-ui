@@ -22,10 +22,12 @@ public class Config {
             properties.setProperty("port", "80"); // 监听端口
             properties.setProperty("username", "sprov"); // 用户名
             properties.setProperty("password", "blog.sprov.xyz"); // 密码
-            properties.setProperty("basePath", ""); // 暂无用处
+            properties.setProperty("basePath", ""); // contextPath，静态文件问题尚未解决，暂时无用
             properties.setProperty("keystoreFile", ""); // jks 证书路径
             properties.setProperty("keystorePass", ""); // jks 证书密码
             properties.setProperty("maxWrongPassCount", String.valueOf(5)); // 密码错误最大次数
+            properties.setProperty("loginTitle", "sprov-ui 登录"); // 登录页面标题
+            properties.setProperty("loginFooter", "Github - <a href=\"https://github.com/sprov065/sprov-ui\" target=\"_blank\">sprov-ui</a>"); // 登录页面 Foot
             try {
                 File file = new File(configPath);
                 FileUtils.forceMkdir(file.getParentFile());
@@ -55,7 +57,14 @@ public class Config {
         return properties.getProperty("password", "blog.sprov.xyz");
     }
 
-    public static String basePath() { return properties.getProperty("basePath", ""); }
+    public static void setBasePath(String basePath) {
+        properties.setProperty("basePath", basePath);
+    }
+
+    public static String basePath() {
+//        return properties.getProperty("basePath", "");
+        return "";
+    }
 
     public static void setApiPort(int port) {
         properties.setProperty("apiPort", String.valueOf(port));
@@ -80,6 +89,18 @@ public class Config {
             properties.setProperty("maxWrongPassCount", String.valueOf(5));
             return 5;
         }
+    }
+
+    public static String loginTitle() {
+        return properties.getProperty("loginTitle", "sprov-ui 登录");
+    }
+
+    public static String loginFooter() {
+        return properties.getProperty("loginFooter", "Github - <a href=\"https://github.com/sprov065/sprov-ui\" target=\"_blank\">sprov-ui</a>");
+    }
+
+    public static String currentVersion() {
+        return "3.1.0";
     }
 
 }

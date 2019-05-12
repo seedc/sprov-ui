@@ -3,7 +3,9 @@
 <body>
 
 <el-footer th:fragment="footer" style="background-color: #409EFF">
-    <div style="text-align: center">Github - <a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
+    <transition name="el-fade-in-linear" appear>
+        <div style="text-align: center"><span style="color: #FFF;">Github - </span><a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
+    </transition>
 </el-footer>
 
 </body>

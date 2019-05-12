@@ -1,7 +1,7 @@
 package xyz.sprov.blog.sprovui.route;
 
-import org.apache.commons.lang3.StringUtils;
 import spark.Route;
+import spark.utils.StringUtils;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.bean.User;
 import xyz.sprov.blog.sprovui.service.SecureService;
@@ -9,6 +9,9 @@ import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.util.SessionUtil;
 import xyz.sprov.blog.sprovui.util.SparkUtil;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BaseRoute {
 
@@ -18,12 +21,18 @@ public class BaseRoute {
 
     private String password = Config.password();
 
+    private String loginTitle = Config.loginTitle();
+    private String loginFooter = Config.loginFooter();
+
     public Route index() {
         return (request, response) -> {
             if (SessionUtil.getUser(request) != null) {
                 response.redirect("/v2ray/");
             }
-            return SparkUtil.render("/index");
+            Map<String, Object> model = new HashMap<>();
+            model.put("loginTitle", loginTitle);
+            model.put("loginFooter", loginFooter);
+            return SparkUtil.render(model, "/index");
         };
     }
 
@@ -46,7 +55,7 @@ public class BaseRoute {
     public Route logout() {
         return (request, response) -> {
             SessionUtil.removeUser(request);
-            response.redirect("/");
+            response.redirect(Config.basePath() + "/");
             return "";
         };
     }

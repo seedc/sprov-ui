@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -204,7 +203,7 @@ public class ServerService {
          * 获取系统运行时间
          */
         public void uptime() throws IOException {
-            String str = FileUtils.readFileToString(new File("/proc/uptime"));
+            String str = FileUtils.readFileToString(new File("/proc/uptime"), "UTF-8");
             uptime = (long) Double.parseDouble(str.split(" ")[0]);
         }
 
@@ -301,7 +300,7 @@ public class ServerService {
          * [总上传流量，总下载流量]
          */
         private long[] getTraffic() throws IOException {
-            List<String> lines = FileUtils.readLines(new File("/proc/net/dev"));
+            List<String> lines = FileUtils.readLines(new File("/proc/net/dev"), "UTF-8");
             long up = 0;
             long down = 0;
             for (String line : lines) {

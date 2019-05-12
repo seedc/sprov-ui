@@ -27,7 +27,8 @@ public class InboundsRoute {
             return controller.add(listen, port, protocol, settings, streamSettings, remark);
         } else if ("edit".equals(action)) {
             String tag = request.queryParams("tag");
-            return controller.edit(listen, port, protocol, settings, streamSettings, remark, tag);
+            int oldPort = request.queryMap("oldPort").integerValue();
+            return controller.edit(listen, oldPort, port, protocol, settings, streamSettings, remark, tag);
         }
         throw new IllegalArgumentException("Unknown action: " + action);
     }

@@ -1,95 +1,54 @@
 <!DOCTYPE html>
-<html>
-<!--<head th:include="common/common_head :: commonHead('v2ray管理面板')"></head>-->
-<head>
-    <meta charset="UTF-8">
-    <meta name="renderer" content="webkit">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2ray管理面板</title>
-    <link href="/res/css/custom.css?v=1.0.0" rel="stylesheet">
-    <link href="/res/element-ui/theme-chalk/index.css" rel="stylesheet">
-    <link href="/res/element-ui/theme-chalk/display.css" rel="stylesheet">
-    <link href="/res/icon/iconfont.css?v=1.0.0" rel="stylesheet">
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="common/common_head :: commonHead('v2ray管理面板')"></head>
 <body>
 
 <el-container id="app" v-cloak>
-    <!--<el-header th:replace="v2ray/header :: header"></el-header>-->
-    <el-header style="background-color: #409EFF;">
-        <!--<span>SPROV-UI</span>-->
-        <el-menu class="hidden-xs-only"
-                 :default-active="defaultActive"
-                 mode="horizontal"
-                 background-color="#409EFF"
-                 text-color="#fff"
-                 active-text-color="#FFE904"
-                 @select="menuSelect">
-            <el-menu-item index="/v2ray/">运行状态</el-menu-item>
-            <el-menu-item index="/v2ray/accounts/">账号列表</el-menu-item>
-            <el-menu-item index="/v2ray/clients/">客户端</el-menu-item>
-            <el-menu-item index="/logout/">退出</el-menu-item>
-        </el-menu>
-        <el-dropdown class="hidden-sm-and-up"
-                     @command="menuSelect"
-                     style="margin-top: 20px; color: white;">
-        <span class="el-dropdown-link">
-            菜单 <i class="el-icon-arrow-down"></i>
-        </span>
-            <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="/v2ray/">运行状态</el-dropdown-item>
-                <el-dropdown-item command="/v2ray/accounts/">账号列表</el-dropdown-item>
-                <el-dropdown-item command="/v2ray/clients/">客户端</el-dropdown-item>
-                <el-dropdown-item command="/logout/">退出</el-dropdown-item>
-            </el-dropdown-menu>
-        </el-dropdown>
-    </el-header>
+    <el-header th:replace="v2ray/header :: header"></el-header>
     <el-main>
-        <el-row v-if="isLastVersion === false" style="margin-bottom: 10px">
-            <el-col>
-                <el-alert :title="'发现面板新版本：' + lastVersion + '，查看升级内容：https://github.com/sprov065/sprov-ui/releases'" type="success" :closable="false"></el-alert>
-            </el-col>
-        </el-row>
-        <el-card>
-            <div slot="header">
-                <el-button type="success" size="mini" @click="restart">重启面板</el-button>
-                <el-button v-if="!isLastVersion" type="primary" size="mini" @click="update">一键升级</el-button>
-            </div>
-            <el-table :data="tableData" :show-header="false">
-                <el-table-column prop="label"></el-table-column>
-                <el-table-column>
-                    <template slot-scope="props">
-                        <div v-if="props.row.tag === 'tag'">
-                            <el-tag :type="props.row.color">{{ props.row.value }}</el-tag>
-                        </div>
-                        <div v-else-if="props.row.tag === 'progress'">
-                            <el-progress :text-inside="true" :stroke-width="18" :percentage="props.row.value" :color="props.row.color"></el-progress>
-                        </div>
-                        <div v-else>
-                            {{ props.row.value }}
-                        </div>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-card>
+        <transition name="el-fade-in-linear" appear>
+            <el-row v-if="isLastVersion === false" style="margin-bottom: 10px">
+                <el-col>
+                    <el-alert :title="'发现面板新版本：' + lastVersion + '，查看升级内容：https://github.com/sprov065/sprov-ui/releases'" type="success" :closable="false"></el-alert>
+                </el-col>
+            </el-row>
+        </transition>
+        <transition name="el-fade-in-linear" appear>
+            <el-row v-if="currentVersion !== ''" style="margin-bottom: 10px">
+                <el-col>
+                    <el-alert :title="'面板当前版本：' + currentVersion" type="success" :closable="false"></el-alert>
+                </el-col>
+            </el-row>
+        </transition>
+        <transition name="el-fade-in-linear" appear>
+            <el-card>
+                <div slot="header">
+                    <el-button type="success" size="mini" @click="restart">重启面板</el-button>
+                    <el-button v-if="!isLastVersion" type="primary" size="mini" @click="update">一键升级</el-button>
+                </div>
+                <el-table :data="tableData" :show-header="false">
+                    <el-table-column prop="label"></el-table-column>
+                    <el-table-column>
+                        <template slot-scope="props">
+                            <div v-if="props.row.tag === 'tag'">
+                                <el-tag :type="props.row.color">{{ props.row.value }}</el-tag>
+                            </div>
+                            <div v-else-if="props.row.tag === 'progress'">
+                                <el-progress :text-inside="true" :stroke-width="18" :percentage="props.row.value" :color="props.row.color"></el-progress>
+                            </div>
+                            <div v-else>
+                                {{ props.row.value }}
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-card>
+        </transition>
     </el-main>
-    <!--<el-footer th:replace="v2ray/footer :: footer"></el-footer>-->
-    <el-footer style="background-color: #409EFF">
-        <div style="text-align: center">Github - <a href="https://github.com/sprov065/sprov-ui" target="_blank">sprov-ui</a></div>
-    </el-footer>
+    <el-footer th:replace="v2ray/footer :: footer"></el-footer>
 </el-container>
 
-<!--<div th:replace="common/common_js :: commonJs"></div>-->
-<script src="/res/vue/vue.min.js"></script>
-<script src="/res/element-ui/index.js"></script>
-<script src="/res/qs/qs.min.js"></script>
-<script src="/res/axios/axios.min.js"></script>
-<script src="/res/clipboard/clipboard.min.js"></script>
-<script src="/res/base64/base64.min.js"></script>
-<script src="/res/qrcode/qrious.min.js"></script>
-<script src="/res/js/application.js?v=2.5.0"></script>
-<script src="/res/js/vue-init.js?v=1.0.0"></script>
-<script src="/res/js/axios-init.js?v=2.7.0"></script>
-<script src="/res/js/v2ray/index.js?v=2.10.0"></script>
+<div th:replace="common/common_js :: commonJs"></div>
+<script src="/res/js/v2ray/index.js?v=3.1.0"></script>
 </body>
 </html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<el-dialog th:fragment="account_dialog"
+           :title="inDL.mode === 'add' ? '添加账号' : '修改账号'"
+           :visible.sync="inDL.visible"
+           width="300px" @close="clearValidates">
+    <!-- 基本 -->
+    <el-form :model="form" :rules="formRules"
+             ref="inForm" size="small"
+             label-position="top">
+        <el-form-item label="选择协议">
+            <el-select v-model="form.protocol" :disabled="inDL.mode !== 'add'">
+                <el-option label="vmess" value="vmess"></el-option>
+                <el-option label="shadowsocks" value="shadowsocks"></el-option>
+                <el-option label="dokodemo-door（端口转发）" value="dokodemo-door"></el-option>
+                <el-option label="mtproto（telegram代理）" value="mtproto"></el-option>
+                <el-option label="socks（socks代理）" value="socks"></el-option>
+                <el-option label="http（http代理）" value="http"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item>
+            <template slot="label">
+                监听 IP
+                <el-tooltip content="若一台服务器有多个IP，可以指定只监听一个IP，配置错误的IP会导致v2ray重启失败，默认0.0.0.0表示监听所有IP。若不理解上述内容，请不要修改">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="form.listen" clearable></el-input>
+        </el-form-item>
+        <el-form-item prop="port">
+            <template slot="label">
+                端口
+                <el-button type="text" size="mini" @click="form.port = randomIntRange(10000,60000)">随机生成</el-button>
+            </template>
+            <el-input v-model.number="form.port" type="number"></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- VMess 协议 -->
+    <el-form v-if="form.protocol === 'vmess'"
+             ref="vmessForm" :rules="vmessRules"
+             :model="vmess" size="small"
+             label-position="top">
+        <el-form-item prop="id">
+            <template slot="label">
+                <el-tooltip content="如果手动填写，请务必填写正确的 UUID，否则会导致重启失败">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+                用户id
+                <el-button type="text" size="mini" @click="vmess.id = randomUUID()">重新生成</el-button>
+            </template>
+            <el-input v-model.trim="vmess.id"></el-input>
+        </el-form-item>
+        <el-form-item label="额外id（alterId）" prop="alterId">
+            <el-input type="number" v-model.number="vmess.alterId" clearable></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- shadowsocks 协议 -->
+    <el-form v-if="form.protocol === 'shadowsocks'"
+             ref="ssForm" :rules="ssRules"
+             :model="ss" size="small"
+             label-position="top">
+        <el-form-item label="加密">
+            <el-select v-model="ss.method">
+                <el-option value="chacha20"></el-option>
+                <el-option value="chacha20-ietf"></el-option>
+                <el-option value="chacha20-ietf-poly1305"></el-option>
+                <el-option value="aes-256-gcm"></el-option>
+                <el-option value="aes-128-gcm"></el-option>
+                <el-option label="aes-256-cfb（不推荐）" value="aes-256-cfb"></el-option>
+                <el-option label="aes-128-cfb（不推荐）" value="aes-128-cfb"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item prop="password">
+            <template slot="label">
+                密码
+                <el-button type="text" size="mini" @click="ss.password = randomSeq(10)">随机生成</el-button>
+            </template>
+            <el-input v-model.trim="ss.password" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="网络">
+            <el-select v-model="ss.network">
+                <el-option label="tcp + udp" value="tcp,udp"></el-option>
+                <el-option value="tcp"></el-option>
+                <el-option value="udp"></el-option>
+            </el-select>
+        </el-form-item>
+    </el-form>
+    <!-- dokodemo-door 协议 -->
+    <el-form v-if="form.protocol === 'dokodemo-door'"
+             ref="dokoForm" :rules="dokoRules"
+             :model="doko" size="small"
+             label-position="top">
+        <el-form-item prop="address">
+            <template slot="label">
+                目标地址
+                <el-tooltip content="填写一个IP或域名">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="doko.address" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="目标端口" prop="port">
+            <el-input type="number" v-model.number="doko.port" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="底层协议">
+            <el-select v-model="doko.network">
+                <el-option label="tcp + udp" value="tcp,udp"></el-option>
+                <el-option value="tcp"></el-option>
+                <el-option value="udp"></el-option>
+            </el-select>
+        </el-form-item>
+    </el-form>
+    <!-- mtproto 协议 -->
+    <el-form v-if="form.protocol === 'mtproto'"
+             size="small"
+             label-position="top">
+        <el-form-item>
+            <template slot="label">
+                密钥
+                <el-button type="text" size="mini" @click="mt.secret = randomMTSecret()">重新生成</el-button>
+            </template>
+            <el-input :disabled="true" v-model="mt.secret"></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- socks 协议 -->
+    <el-form v-if="form.protocol === 'socks'"
+             size="small"
+             label-position="top">
+        <el-form-item label="认证方式">
+            <el-switch v-model="socks.auth"
+                       active-text="密码认证" inactive-text="无认证"
+                       active-value="password" inactive-value="noauth"></el-switch>
+        </el-form-item>
+        <el-form-item v-if="socks.auth === 'password'">
+            <template slot="label">
+                认证账号
+                <el-tooltip content="socks 认证账号，可添加多个，每一行对应一组用户名和密码，必填用户名，无账号则无法连接">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-row v-for="(account, index) in socks.accounts" type="flex" justify="space-around">
+                <el-col :span="10">
+                    <el-input v-model.trim="account.user" placeholder="用户名" clearable></el-input>
+                </el-col>
+                <el-col :span="10">
+                    <el-input v-model.trim="account.pass" placeholder="密码" clearable></el-input>
+                </el-col>
+                <el-col :span="2">
+                    <el-button v-if="index > 0 && index === socks.accounts.length - 1" type="text" size="mini" icon="el-icon-minus" @click="socks.accounts.splice(index, 1)"></el-button>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-button type="success" size="mini" icon="el-icon-plus" @click="socks.accounts.push({ user: '', pass: '' })"></el-button>
+            </el-row>
+        </el-form-item>
+        <el-form-item>
+            <template slot="label">
+                开启 udp
+                <el-tooltip content="是否开启 UDP 协议的支持">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-switch v-model="socks.udp"></el-switch>
+        </el-form-item>
+        <el-form-item v-if="socks.udp">
+            <template slot="label">
+                IP
+                <el-tooltip content="当开启 UDP 时，V2Ray 需要知道本机的 IP 地址。默认值为 127.0.0.1">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="socks.ip" clearable></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- http 协议 -->
+    <el-form v-if="form.protocol === 'http'"
+             size="small"
+             label-position="top">
+        <el-form-item>
+            <template slot="label">
+                认证账号
+                <el-tooltip content="http 认证账号，可添加多个，每一行对应一组用户名和密码，必填用户名，无账号则不进行认证">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-row v-for="(account, index) in http.accounts" type="flex" justify="space-around">
+                <el-col :span="10">
+                    <el-input v-model.trim="account.user" placeholder="用户名" clearable></el-input>
+                </el-col>
+                <el-col :span="10">
+                    <el-input v-model.trim="account.pass" placeholder="密码" clearable></el-input>
+                </el-col>
+                <el-col :span="2">
+                    <el-button type="text" size="mini" icon="el-icon-minus" @click="http.accounts.splice(index, 1)"></el-button>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-button type="success" size="mini" icon="el-icon-plus" @click="http.accounts.push({ user: '', pass: '' })"></el-button>
+            </el-row>
+        </el-form-item>
+    </el-form>
+    <!-- streamSettings -->
+    <el-form v-if="form.protocol === 'vmess'"
+             size="small" label-position="top">
+        <el-form-item>
+            <template slot="label">
+                底层传输
+                <el-tooltip content="若ip被tcp阻断，可使用kcp">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-select v-model="stream.network">
+                <el-option label="tcp" value="tcp"></el-option>
+                <el-option label="kcp（底层使用udp协议）" value="kcp"></el-option>
+                <el-option label="ws（WebSocket）" value="ws"></el-option>
+                <el-option label="h2（HTTP/2）" value="http"></el-option>
+            </el-select>
+        </el-form-item>
+    </el-form>
+    <!-- kcp Settings -->
+    <el-form v-if="form.protocol === 'vmess' && stream.network === 'kcp'"
+             ref="kcpForm" :rules="kcpRules"
+             :model="kcp" size="small"
+             label-position="top">
+        <el-form-item>
+            <template slot="label">
+                伪装
+                <el-tooltip content="伪装需谨慎使用，效果可能变好也可能变差">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-select v-model="kcp.type">
+                <el-option label="none（不伪装）" value="none"></el-option>
+                <el-option label="srtp（伪装视频通话数据）" value="srtp"></el-option>
+                <el-option label="utp（伪装BT下载）" value="utp"></el-option>
+                <el-option label="wechat-video（伪装微信视频）" value="wechat-video"></el-option>
+                <el-option label="dtls（伪装DTLS 1.2数据包）" value="dtls"></el-option>
+                <el-option label="wireguard（伪装WireGuard数据包）" value="wireguard"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item prop="uplinkCapacity">
+            <template slot="label">
+                上行链接容量（MB/s）
+                <el-tooltip content="决定服务器最大发送数据的速度，推荐设为实际的带宽，当速度不够时，可以逐渐增加，直到带宽的两倍左右">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input type="number" v-model.number="kcp.uplinkCapacity" clearable></el-input>
+        </el-form-item>
+        <el-form-item prop="downlinkCapacity">
+            <template slot="label">
+                下行链接容量（MB/s）
+                <el-tooltip content="决定服务器最大接收数据的速度，推荐设置为一个较大的值，比如100">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input type="number" v-model.number="kcp.downlinkCapacity" clearable></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- ws Settings -->
+    <el-form v-if="form.protocol === 'vmess' && stream.network === 'ws'"
+             ref="wsForm" :rules="wsRules"
+             :model="ws" size="small"
+             label-position="top">
+        <el-form-item prop="path">
+            <template slot="label">
+                路径
+                <el-tooltip content="WebSocket 所使用的 HTTP 协议路径">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="ws.path" clearable></el-input>
+        </el-form-item>
+        <el-form-item>
+            <template slot="label">
+                HTTP 头
+                <el-tooltip content="自定义 HTTP 头，可添加多个键值对">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-row v-for="(header, index) in ws.headers" type="flex" justify="center">
+                <el-col :span="2">
+                    键
+                </el-col>
+                <el-col :span="6">
+                    <el-input v-model.trim="header.name" clearable></el-input>
+                </el-col>
+                <el-col :span="2">
+                    值
+                </el-col>
+                <el-col :span="12">
+                    <el-input v-model.trim="header.value" clearable></el-input>
+                </el-col>
+                <el-col :span="2">
+                    <el-button v-if="index > 0 && index === ws.headers.length - 1" type="text" size="mini" icon="el-icon-minus" @click="ws.headers.splice(index, 1)"></el-button>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-button type="success" size="mini" icon="el-icon-plus" @click="ws.headers.push({ name: '', value: '' })"></el-button>
+            </el-row>
+        </el-form-item>
+        <el-form-item>
+            <template slot="label">
+                开启 tls
+                <el-tooltip content="需要域名和ssl证书，如果不懂得使用建议不要开启">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-switch v-model="stream.tls"></el-switch>
+        </el-form-item>
+    </el-form>
+    <!-- http Settings -->
+    <el-form v-if="form.protocol === 'vmess' && stream.network === 'http'"
+             ref="http2Form" :rules="http2Rules"
+             :model="http2" size="small"
+             label-position="top">
+        <el-form-item prop="path">
+            <template slot="label">
+                路径
+                <el-tooltip content="HTTP/2 所使用的 HTTP 协议路径">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="http2.path" clearable></el-input>
+        </el-form-item>
+        <el-form-item>
+            <template slot="label">
+                Host
+                <el-tooltip content="自定义 Host，可添加多个">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-row v-for="(host, index) in http2.hosts" type="flex" justify="center">
+                <el-col :span="20">
+                    <el-input v-model.trim="http2.hosts[index]" clearable></el-input>
+                </el-col>
+                <el-col :span="4">
+                    <el-button v-if="index > 0 && index === http2.hosts.length - 1" type="text" size="mini" icon="el-icon-minus" @click="http2.hosts.splice(index, 1)"></el-button>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-button type="success" size="mini" icon="el-icon-plus" @click="http2.hosts.push('')"></el-button>
+            </el-row>
+        </el-form-item>
+    </el-form>
+    <!-- tls Settings -->
+    <el-form v-if="form.protocol === 'vmess' && ((stream.network === 'ws' || stream.network === 'http') && stream.security === 'tls')"
+             ref="tlsForm" :rules="tlsRules" :model="tls"
+             size="small" label-position="top">
+        <el-form-item>
+            <template slot="label">
+                域名
+                <el-tooltip content="指定服务器端证书的域名，在连接由 IP 建立时有用。">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="tls.serverName" clearable></el-input>
+        </el-form-item>
+        <el-form-item prop="certFile">
+            <template slot="label">
+                证书
+                <el-tooltip content="证书文件路径，如使用 OpenSSL 生成，后缀名为 .crt。">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="tls.certFile" clearable></el-input>
+        </el-form-item>
+        <el-form-item prop="keyFile">
+            <template slot="label">
+                密钥
+                <el-tooltip content="密钥文件路径，如使用 OpenSSL 生成，后缀名为 .key。目前暂不支持需要密码的 key 文件。">
+                    <i class="el-icon-question"></i>
+                </el-tooltip>
+            </template>
+            <el-input v-model.trim="tls.keyFile" clearable></el-input>
+        </el-form-item>
+    </el-form>
+    <!-- 其它 -->
+    <el-form size="small" label-position="top">
+        <el-form-item label="备注（可选）">
+            <el-input v-model.trim="form.remark" clearable></el-input>
+        </el-form-item>
+    </el-form>
+    <el-form size="small" label-position="top">
+        <el-form-item>
+            <el-button v-if="inDL.mode === 'add'" type="primary" size="small" @click="addInbound(form)" :loading="btnLoad">添加</el-button>
+            <el-button v-else type="primary" size="small" @click="editInbound(form)" :loading="btnLoad">修改</el-button>
+        </el-form-item>
+    </el-form>
+</el-dialog>

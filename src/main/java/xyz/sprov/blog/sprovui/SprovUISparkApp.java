@@ -1,6 +1,6 @@
 package xyz.sprov.blog.sprovui;
 
-import org.apache.commons.lang3.StringUtils;
+import spark.utils.StringUtils;
 import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.SparkUtil;
 
@@ -20,18 +20,42 @@ public class SprovUISparkApp {
         int port  = Config.getPort();
         port(port);
 
-        threadPool(4, 1, 60000);
+        threadPool(4, 1, 30000);
 
         initExceptionHandler(e -> {
             System.err.println("sprov-ui 启动失败：" + e.getMessage());
             System.exit(1);
         });
 
-        exception(Exception.class, (e, request, response) -> System.out.println(e.getMessage()));
+//        exception(Exception.class, (e, request, response) -> System.out.println(e.getMessage()));
+
+        configSSL();
 
         staticFiles.location("/static");
         staticFiles.expireTime(3600 * 24 * 30 * 6);
 
+        String basePath = Config.basePath();
+        if (StringUtils.isBlank(basePath)) {
+            createPath();
+        } else {
+            if (!basePath.startsWith("/")) {
+                basePath = "/" + basePath;
+            }
+            while (basePath.endsWith("/")) {
+                basePath = basePath.substring(0, basePath.length() - 1);
+            }
+            Config.setBasePath(basePath);
+            System.out.println("basePath = " + basePath);
+            redirect.get("/res/", basePath + "/res/");
+            path(basePath, SprovUISparkApp::createPath);
+        }
+
+        awaitInitialization();
+        long end = System.currentTimeMillis();
+        System.out.println("sprov-ui 启动成功，耗时 " + (end - start) + " ms，面板监听端口为 " + port);
+    }
+
+    private static void configSSL() {
         String keystoreFile = Config.keystoreFile();
         if (!StringUtils.isEmpty(keystoreFile)) {
             if (!new File(keystoreFile).exists()) {
@@ -40,10 +64,14 @@ public class SprovUISparkApp {
                 secure(keystoreFile, Config.keystorePass(), null, null);
             }
         }
+    }
+
+    private static void createPath() {
 
         before("", encodingFilter);
         before("/*", encodingFilter);
 
+        get("", baseRoute.index());
         get("/", baseRoute.index());
         post("/login", baseRoute.login(), jsonTransformer);
         get("/logout", baseRoute.logout(), jsonTransformer);
@@ -98,9 +126,6 @@ public class SprovUISparkApp {
             post("/update", sprovUIController.update(), jsonTransformer);
             post("/restart", sprovUIController.restart(), jsonTransformer);
         });
-        awaitInitialization();
-        long end = System.currentTimeMillis();
-        System.out.println("sprov-ui 启动成功，耗时 " + (end - start) + " ms，面板监听端口为 " + port);
     }
 
 }

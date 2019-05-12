@@ -2,7 +2,8 @@ package xyz.sprov.blog.sprovui.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.lang3.StringUtils;
+import spark.utils.StringUtils;
+import xyz.sprov.blog.sprovui.util.Config;
 import xyz.sprov.blog.sprovui.util.Context;
 import xyz.sprov.blog.sprovui.util.HttpUtil;
 
@@ -38,6 +39,7 @@ public class ReportService {
                     }
                     int n = (Integer) map.getOrDefault(protocol, 0);
                     map.put(protocol, n + 1);
+                    map.put("version", Config.currentVersion());
                 }
                 HttpUtil.post(reportUrl, map);
             } catch (Exception ignore) {}

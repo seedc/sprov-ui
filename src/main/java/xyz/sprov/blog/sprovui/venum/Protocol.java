@@ -1,6 +1,6 @@
 package xyz.sprov.blog.sprovui.venum;
 
-import org.apache.commons.lang3.StringUtils;
+import spark.utils.StringUtils;
 
 public enum Protocol {
 

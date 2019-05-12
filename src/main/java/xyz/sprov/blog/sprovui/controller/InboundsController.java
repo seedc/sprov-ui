@@ -1,7 +1,7 @@
 package xyz.sprov.blog.sprovui.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.lang3.StringUtils;
+import spark.utils.StringUtils;
 import xyz.sprov.blog.sprovui.bean.Msg;
 import xyz.sprov.blog.sprovui.exception.V2rayConfigException;
 import xyz.sprov.blog.sprovui.service.ExtraConfigService;
@@ -86,6 +86,7 @@ public class InboundsController {
 //    @ResponseBody
 //    @PostMapping("edit")
     public Msg edit(String listen,
+                    int oldPort,
                     int port,
                     String protocol,
                     String settings,
@@ -98,6 +99,7 @@ public class InboundsController {
             if (!StringUtils.isEmpty(tag)) {
                 inbound.put("tag", tag);
             }
+            inbound.put("oldPort", oldPort);
         } catch (V2rayConfigException e) {
             return new Msg(false, e.getMessage());
         }

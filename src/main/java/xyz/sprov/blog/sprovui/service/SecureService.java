@@ -23,7 +23,7 @@ public class SecureService {
     private int maxWrongPassCount = Config.maxWrongPassCount();
 
     public SecureService() {
-        Context.threadService.scheduleAtFixedRate(new SecurityJob(), 30, 30, TimeUnit.MINUTES);
+        Context.threadService.scheduleAtFixedRate(new SecurityJob(), 29, 29, TimeUnit.MINUTES);
     }
 
     public boolean isBlackList(Request request) {
@@ -75,6 +75,7 @@ public class SecureService {
             } finally {
                 writeLock.unlock();
             }
+            System.gc();
         }
     }
 
