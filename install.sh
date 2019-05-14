@@ -190,10 +190,10 @@ init_service() {
 
 set_systemd() {
     init_service
-    reset="n"
+    reset="y"
     first="y"
     if [[ -f "${conf_path}" ]]; then
-        read -p "是否重新设置面板端口、用户名和密码[默认n]：" reset
+        read -p "是否重新设置面板端口、用户名和密码[默认y]：" reset
         first="n"
     fi
     if [[ x"$reset" == x"y" || x"$reset" == x"Y" ]]; then
