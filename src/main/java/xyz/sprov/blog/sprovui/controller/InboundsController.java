@@ -33,8 +33,6 @@ public class InboundsController {
         inbound.put("port", port);
         inbound.put("protocol", protocol);
         inbound.put("remark", remark);
-//        if (!StringUtils.isBlank(tag)) {
-//        }
         try {
             inbound.put("settings", JSONObject.parseObject(settings));
         } catch (Exception e) {
@@ -284,51 +282,6 @@ public class InboundsController {
         }
     }
 
-    /**
-     * 添加一个VMess用户
-     */
-//    @ResponseBody
-//    @PostMapping("vmess/add")
-    public Msg vmessAdd(int port, String id, int alterId) {
-        JSONObject client = new JSONObject();
-        client.put("port", port);
-        client.put("id", id);
-        client.put("alterId", alterId);
-        try {
-            configService.addVmessUser(client);
-            return new Msg(true, "修改配置文件成功，需重启v2ray生效");
-        } catch (V2rayConfigException e) {
-            return new Msg(false, e.getMessage());
-        } catch (IOException e) {
-            return new Msg(false, "读取或写入配置文件失败");
-        }
-    }
 
-    /**
-     * 删除一个VMess入站协议
-     */
-//    @ResponseBody
-//    @PostMapping("vmess/del")
-    public Msg vmessDel(int port, String uuid) {
-        return new Msg(false);
-    }
-
-    /**
-     * 删除一个ss入站协议
-     */
-//    @ResponseBody
-//    @PostMapping("ss/del")
-    public Msg ssDel(int port) {
-        return new Msg(false);
-    }
-
-    /**
-     * 删除一个tg代理入站协议
-     */
-//    @ResponseBody
-//    @PostMapping("mtproto/del")
-    public Msg mtprotoDel() {
-        return new Msg(false);
-    }
 
 }

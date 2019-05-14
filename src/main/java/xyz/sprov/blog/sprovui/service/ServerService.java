@@ -31,12 +31,10 @@ public class ServerService {
 //    @Autowired
     private V2rayService v2rayService = Context.v2rayService;
 
-    private ThreadService threadService = Context.threadService;
-
     private GetSystemInfoThread thread = new GetSystemInfoThread();
 
     public ServerService() {
-        threadService.scheduleAtFixedRate(thread, 1, 1, TimeUnit.SECONDS);
+        Context.threadService.scheduleAtFixedRate(thread, 1, 1, TimeUnit.SECONDS);
     }
 
     /**

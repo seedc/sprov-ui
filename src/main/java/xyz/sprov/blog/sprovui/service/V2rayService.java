@@ -21,14 +21,14 @@ public class V2rayService {
 //    private String active;
 
 //    @Value("${v2ray.install}")
-    private String installCmd = "bash <(curl -L -s https://install.direct/go.sh)";
+    private static final String INSTALL_CMD = "bash <(curl -L -s https://install.direct/go.sh)";
 
 //    @Value("${v2ray.update}")
-    private String updateCmd = "bash <(curl -L -s https://install.direct/go.sh) -f";
+    private static final String UPDATE_CMD = "bash <(curl -L -s https://install.direct/go.sh) -f";
 
-    private String startCmd = "systemctl start v2ray";
-    private String restartCmd = "systemctl restart v2ray";
-    private String stopCmd = "systemctl stop v2ray";
+    private static final String START_CMD = "systemctl start v2ray";
+    private static final String RESTART_CMD = "systemctl restart v2ray";
+    private static final String STOP_CMD = "systemctl stop v2ray";
 
     private final AtomicBoolean inOperation = new AtomicBoolean(false);
 
@@ -94,7 +94,7 @@ public class V2rayService {
         } else if (!forceUpdate && isInstalled()) {
             throw new V2rayException("请不要重复安装");
         }
-        return operation(forceUpdate ? updateCmd : installCmd);
+        return operation(forceUpdate ? UPDATE_CMD : INSTALL_CMD);
     }
 
     /**
@@ -116,7 +116,7 @@ public class V2rayService {
             throw new V2rayException("没有安装v2ray");
         }
         synchronized (inOperation) {
-            ExecUtil.execForStatus(stopCmd);
+            ExecUtil.execForStatus(STOP_CMD);
             ExecUtil.execForStatus("systemctl disable v2ray");
         }
         return false;
@@ -129,7 +129,7 @@ public class V2rayService {
         if (inOperation.get()) {
             throw new V2rayException("正在操作中，请稍后");
         }
-        return operation(startCmd);
+        return operation(START_CMD);
     }
 
     /**
@@ -139,7 +139,7 @@ public class V2rayService {
         if (inOperation.get()) {
             throw new V2rayException("正在操作中，请稍后");
         }
-        threadService.schedule(() -> operation(restartCmd), 3, TimeUnit.SECONDS);
+        threadService.schedule(() -> operation(RESTART_CMD), 3, TimeUnit.SECONDS);
     }
 
     /**
@@ -149,7 +149,7 @@ public class V2rayService {
         if (inOperation.get()) {
             throw new V2rayException("正在操作中，请稍后");
         }
-        threadService.schedule(() -> operation(stopCmd), 3, TimeUnit.SECONDS);
+        threadService.schedule(() -> operation(STOP_CMD), 3, TimeUnit.SECONDS);
     }
 
     private boolean operation(String cmd) throws IOException, InterruptedException {

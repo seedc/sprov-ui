@@ -13,14 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 public class ReportService {
 
-    private String reportUrl = "https://blog.sprov.xyz/sprov-ui/report";
+    private static final String REPORT_URL = "https://blog.sprov.xyz/sprov-ui/report";
 
     private V2rayConfigService v2rayConfigService = Context.v2rayConfigService;
 
-    private ThreadService threadService = Context.threadService;
-
     public ReportService() {
-        threadService.scheduleAtFixedRate(new ReportThread(), 30, 30, TimeUnit.MINUTES);
+        Context.threadService.scheduleAtFixedRate(new ReportThread(), 30, 30, TimeUnit.MINUTES);
     }
 
     private class ReportThread implements Runnable {
@@ -41,7 +39,7 @@ public class ReportService {
                     map.put(protocol, n + 1);
                     map.put("version", Config.currentVersion());
                 }
-                HttpUtil.post(reportUrl, map);
+                HttpUtil.post(REPORT_URL, map);
             } catch (Exception ignore) {}
         }
     }

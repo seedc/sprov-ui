@@ -21,8 +21,6 @@ import java.util.function.Consumer;
 
 public class ExtraConfigService {
 
-    private ThreadService threadService = Context.threadService;
-
     private String configPath = "/etc/sprov-ui/v2ray-extra-config.json";
 
     private JSONObject config;
@@ -48,7 +46,7 @@ public class ExtraConfigService {
                 System.exit(-1);
             }
         }
-        threadService.scheduleAtFixedRate(new UpdateConfigThread(), 1, 1, TimeUnit.MINUTES);
+        Context.threadService.scheduleAtFixedRate(new UpdateConfigThread(), 1, 1, TimeUnit.MINUTES);
     }
 
     public Map<String, JSONObject> getTagInboundMap() {

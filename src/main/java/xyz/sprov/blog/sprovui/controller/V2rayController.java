@@ -25,19 +25,6 @@ public class V2rayController {
 
     private ExtraConfigService extraConfigService = Context.extraConfigService;
 
-//    @GetMapping("")
-    public String index() {
-        return "v2ray/index";
-    }
-
-//    @GetMapping("accounts")
-    public String accounts() {
-        return "v2ray/accounts";
-    }
-
-//    @GetMapping("clients")
-    public String clients() { return "v2ray/clients"; }
-
     /**
      * v2ray状态
      * 0：运行

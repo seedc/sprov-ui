@@ -17,9 +17,7 @@ import java.util.regex.Pattern;
 
 public class SprovUIService {
 
-    private ThreadService threadService = Context.threadService;
-
-    private String githubLastReleaseUrl = "https://github.com/sprov065/sprov-ui/releases/latest";
+    private static final String GITHUB_LAST_RELEASE_URL = "https://github.com/sprov065/sprov-ui/releases/latest";
 
     private String currentVersion = Config.currentVersion();
 
@@ -27,14 +25,14 @@ public class SprovUIService {
 
     private Pattern urlVersionPattern = Pattern.compile("https://github\\.com/[^/]+/[^/]+/releases/tag/(.+)");
 
-    private String jarDir = "/usr/local/sprov-ui/";
+    private static final String JAR_DIR = "/usr/local/sprov-ui/";
 
     public SprovUIService() {
-        threadService.scheduleAtFixedRate(new GetLastVersionRunnable(), 5, 29, TimeUnit.MINUTES);
+        Context.threadService.scheduleAtFixedRate(new GetLastVersionRunnable(), 5, 29, TimeUnit.MINUTES);
     }
 
     private String getLastVersion() throws Exception {
-        String url = HttpUtil.getRealUrl(githubLastReleaseUrl);
+        String url = HttpUtil.getRealUrl(GITHUB_LAST_RELEASE_URL);
         Matcher matcher = urlVersionPattern.matcher(url);
         if (matcher.find()) {
             return matcher.group(1);
@@ -81,8 +79,8 @@ public class SprovUIService {
         }
 
         // 备份旧版本软件包
-        File oldJar = new File(jarDir + "sprov-ui.jar");
-        File copiedOldJar = new File(jarDir + "sprov-ui-" + currentVersion + ".jar");
+        File oldJar = new File(JAR_DIR + "sprov-ui.jar");
+        File copiedOldJar = new File(JAR_DIR + "sprov-ui-" + currentVersion + ".jar");
         FileUtils.deleteQuietly(copiedOldJar);
         try {
             FileUtils.copyFile(oldJar, copiedOldJar);
@@ -92,7 +90,7 @@ public class SprovUIService {
         }
 
         // 写入新版本软件包至目录
-        File newJar = new File(jarDir + "sprov-ui-" + lastVersion + ".jar");
+        File newJar = new File(JAR_DIR + "sprov-ui-" + lastVersion + ".jar");
         FileUtils.deleteQuietly(newJar);
         try {
             FileUtils.writeByteArrayToFile(newJar, bytes);

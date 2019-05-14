@@ -46,7 +46,6 @@ public class SprovUISparkApp {
             }
             Config.setBasePath(basePath);
             System.out.println("basePath = " + basePath);
-            redirect.get("/res/", basePath + "/res/");
             path(basePath, SprovUISparkApp::createPath);
         }
 
