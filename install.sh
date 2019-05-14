@@ -106,7 +106,7 @@ install_java() {
     elif [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk -y
     elif [[ x"${release}" == x"debian" || x"${release}" == x"ubuntu" ]]; then
-        apt install openjdk-8-jre-headless -y
+        apt install default-jre -y
     fi
     if [[ $? -ne 0 ]]; then
         echo -e "${red}Java环境安装失败，请检查错误信息${plain}"
@@ -116,7 +116,7 @@ install_java() {
         echo -e ""
         echo -e "Debian / Ubuntu 也可以尝试用以下命令安装 java 环境，若安装 java 成功，那么重新运行安装面板即可:"
         echo -e "1. ${green}apt-get install openjdk-11-jre-headless -y${plain}"
-        echo -e "2. ${green}apt-get install default-jre -y${plain}"
+        echo -e "2. ${green}apt-get install openjdk-8-jre-headless -y${plain}"
         exit 1
     fi
 }
