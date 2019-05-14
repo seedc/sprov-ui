@@ -86,13 +86,14 @@ elif [[ x"${release}" == x"debian" ]]; then
     fi
 fi
 
-install_bc() {
+install_base() {
     command -v bc >/dev/null 2>&1 || yum install bc -y || apt install bc -y
+    command -v curl >/dev/null 2>&1 || yum install curl -y || apt install curl -y
 }
 
 install_java() {
     if [[ -f /usr/bin/java ]]; then
-        install_bc
+        install_base
         java_version=`/usr/bin/java -version 2>&1 | awk -F '\"' 'NR==1{print $2}' | awk -F '.' '{OFS="."; print $1,$2;}'`
         require_version=1.8
         is_ok=`echo "$java_version>=$require_version" | bc`
@@ -103,9 +104,9 @@ install_java() {
 	    exit -1
 	fi
     elif [[ x"${release}" == x"centos" ]]; then
-        yum install java-1.8.0-openjdk curl -y
+        yum install java-1.8.0-openjdk -y
     elif [[ x"${release}" == x"debian" || x"${release}" == x"ubuntu" ]]; then
-        apt install default-jre curl -y
+        apt install openjdk-8-jre-headless -y
     fi
     if [[ $? -ne 0 ]]; then
         echo -e "${red}Java环境安装失败，请检查错误信息${plain}"
