@@ -112,10 +112,11 @@ install_java() {
         echo -e "${red}Java环境安装失败，请检查错误信息${plain}"
         echo -e "尝试更新系统可能可以解决该问题"
         echo -e "CentOS: ${green}yum update${plain}"
-        echo -e "Debian / Ubuntu: ${green}apt-get update${plain}"
+        echo -e "Debian / Ubuntu: ${green}apt-get update && apt-get upgrade${plain}"
         echo -e ""
-        echo -e "Debian / Ubuntu 也可以尝试用这条命令安装 java 环境，若安装 java 成功，那么重新运行安装面板即可:"
-        echo -e "${green}apt-get install openjdk-11-jre-headless -y${plain}"
+        echo -e "Debian / Ubuntu 也可以尝试用以下命令安装 java 环境，若安装 java 成功，那么重新运行安装面板即可:"
+        echo -e "1. ${green}apt-get install openjdk-11-jre-headless -y${plain}"
+        echo -e "2. ${green}apt-get install default-jre -y${plain}"
         exit 1
     fi
 }
