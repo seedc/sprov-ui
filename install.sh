@@ -100,8 +100,11 @@ install_java() {
         if [[ is_ok -eq 1 ]]; then
 	    echo -e "${green}已检测到1.8及以上版本的java，无需重复安装${plain}"
 	else
-	    echo -e "错误：${green}/usr/bin/java${red}的版本低于1.8，请安装大于等于1.8版本的java${plain}"
-	    exit -1
+	    echo -e "错误：${red}/usr/bin/java${red}的版本低于1.8，请安装大于等于1.8版本的java${plain}"
+        echo -e "尝试更新系统可能可以解决该问题："
+	    echo -e "CentOS: ${green}yum update${plain}"
+        echo -e "Debian / Ubuntu: ${green}apt-get update && apt-get upgrade${plain}"
+        exit -1
 	fi
     elif [[ x"${release}" == x"centos" ]]; then
         yum install java-1.8.0-openjdk -y
