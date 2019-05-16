@@ -44,11 +44,7 @@ https://blog.sprov.xyz/2019/02/09/sprov-ui/
 
 >请务必使用 root 用户运行！
 ```
-wget -O /usr/bin/sprov-ui -N --no-check-certificate https://blog.sprov.xyz/sprov-ui.sh && chmod +x /usr/bin/sprov-ui && sprov-ui
-
-```
-```
-wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/sprov065/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/bin/sprov-ui && sprov-ui
+wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/yuyeah/sprov-ui/raw/master/sprov-ui.sh && chmod +x /usr/bin/sprov-ui && sprov-ui
 
 ```
 
