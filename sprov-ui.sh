@@ -135,7 +135,7 @@ install_soft() {
 
 install() {
     install_base
-    bash <(curl -L -s https://github.com/yuyeah/sprov-ui/raw/master/install.sh)
+    bash <(curl -L -s https://github.com/seedc/sprov-ui/blob/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -155,7 +155,7 @@ update() {
         return 0
     fi
     install_base
-    bash <(curl -L -s https://github.com/yuyeah/sprov-ui/raw/master/install.sh)
+    bash <(curl -L -s https://github.com/seedc/sprov-ui/blob/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             restart
@@ -326,7 +326,7 @@ show_log() {
 }
 
 install_bbr() {
-    bash <(curl -L -s https://github.com/yuyeah/sprov-ui/raw/master/bbr.sh)
+    bash <(curl -L -s https://github.com/seedc/sprov-ui/blob/bbr.sh)
     if [[ $? == 0 ]]; then
         echo ""
         echo -e "${green}安装 bbr 成功${plain}"
@@ -339,7 +339,7 @@ install_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/yuyeah/sprov-ui/raw/master/sprov-ui.sh
+    wget -O /usr/bin/sprov-ui -N --no-check-certificate https://github.com/seedc/sprov-ui/blob/sprov-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         echo -e "${red}下载脚本失败，请检查本机能否连接 Github${plain}"
