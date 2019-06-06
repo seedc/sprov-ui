@@ -53,7 +53,7 @@ https://blog.sprov.xyz/2019/02/09/sprov-ui/
 > 请务必使用 root 用户运行！
 
 ```
-wget -O /usr/bin/sprov-ui -N --no-check-certificate https://www.ydylbr.com/seedc/sprov-ui/blob/sprov-ui.sh && chmod +x /usr/bin/sprov-ui && sprov-ui
+wget -O /usr/bin/sprov-ui -N --no-check-certificate https://download.o2oyc.com/seedc/sprov-ui/blob/sprov-ui.sh && chmod +x /usr/bin/sprov-ui && sprov-ui
 
 ```
 
