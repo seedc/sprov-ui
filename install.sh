@@ -126,7 +126,7 @@ install_java() {
 
 install_v2ray() {
     echo -e "${green}开始安装or升级v2ray${plain}"
-    bash <(curl -L -s https://install.direct/go.sh) -f
+    bash <(curl -L -s https://github.com/v2fly/fhs-install-v2ray) -f
     if [[ $? -ne 0 ]]; then
         echo -e "${red}v2ray安装或升级失败，请检查错误信息${plain}"
         exit 1
